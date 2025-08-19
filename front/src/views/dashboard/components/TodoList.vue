@@ -10,7 +10,7 @@
       </el-button>
     </div>
     <div class="todo-list">
-      <div v-for="todo in todos" :key="todo.id" class="todo-item">
+      <div v-if="todos.length" v-for="todo in todos" :key="todo.id" class="todo-item">
         <el-checkbox :model-value="todo.completed" @change="(val) => $emit('update-todo', todo, val)">
           <span :class="{ completed: todo.completed }">{{ todo.title }}</span>
         </el-checkbox>
@@ -22,6 +22,9 @@
             <Delete />
           </el-icon>
         </div>
+      </div>
+      <div v-else class="text-center">
+         暂无待办事项，去添加一个吧
       </div>
     </div>
   </div>

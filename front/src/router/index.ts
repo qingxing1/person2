@@ -140,6 +140,12 @@ export const asyncRoutes: RouteRecordRaw[] = [
         component: () => import('@/views/person/information/index.vue'),
         name: 'person_information',
         meta: { title: '信息留言' }
+      },
+      {
+        path: 'collect',
+        component: () => import('@/views/person/collect/index.vue'),
+        name: 'person_collect',
+        meta: { title: '收藏管理' }
       }
     ]
   },
@@ -155,12 +161,11 @@ export const asyncRoutes: RouteRecordRaw[] = [
         meta: { title: '前端展示', icon: 'home' }
       }
     ]
-  },
+  }
 ]
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: constantRoutes
 })
-
 
 export default router
