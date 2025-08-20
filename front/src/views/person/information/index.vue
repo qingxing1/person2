@@ -1,26 +1,43 @@
 <template>
   <div class="message-management-container">
     <!-- 页面标题 -->
-    <div class="page-header">
-      <h2>
-        <el-icon><Message /></el-icon>
-        消息管理
-      </h2>
-      <p class="subtitle">管理前台用户提交的联系信息</p>
+    <div class="page-header-modern">
+      <div class="header-content">
+        <div class="header-left">
+          <div class="icon-wrapper">
+            <el-icon><Message /></el-icon>
+          </div>
+          <div class="header-info">
+            <h1>消息管理</h1>
+            <p class="page-description">管理前台用户提交的联系信息</p>
+          </div>
+        </div>
+        <div class="header-stats">
+          <div class="stat-item">
+            <div class="stat-number">{{ filteredMessages.length }}</div>
+            <div class="stat-label">总消息</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">{{ unreadCount }}</div>
+            <div class="stat-label">未读</div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- 搜索和筛选区域 -->
-    <div class="search-filter-container">
-      <el-row :gutter="20">
-        <el-col :span="16">
-          <el-input
-            v-model="searchKeyword"
-            placeholder="搜索姓名、邮箱或主题"
-            prefix-icon="Search"
-            clearable
-          />
-        </el-col>
-        <el-col :span="8">
+    <div class="search-section">
+      <div class="search-container">
+        <div class="search-row">
+          <div class="search-input-group">
+            <el-icon class="search-icon"><Search /></el-icon>
+            <el-input
+              v-model="searchKeyword"
+              placeholder="搜索姓名、邮箱或主题"
+              clearable
+              class="modern-input"
+            />
+          </div>
           <el-date-picker
             v-model="dateRange"
             type="daterange"
@@ -29,9 +46,10 @@
             end-placeholder="结束日期"
             format="YYYY-MM-DD"
             value-format="YYYY-MM-DD"
+            class="modern-date-picker"
           />
-        </el-col>
-      </el-row>
+        </div>
+      </div>
     </div>
 
     <!-- 消息列表 -->
@@ -43,13 +61,13 @@
         border
         highlight-current-row
       >
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="name" label="姓名" width="120" />
-        <el-table-column prop="email" label="邮箱" width="200" />
-        <el-table-column prop="subject" label="主题" width="180" />
-        <el-table-column prop="address" label="地址" width="200" />
-        <el-table-column prop="submitTime" label="提交时间" width="180" />
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="id" label="ID" width="80" align="center"/>
+        <el-table-column prop="name" label="姓名" width="120" align="center"/>
+        <el-table-column prop="email" label="邮箱" width="220" align="center"/>
+        <el-table-column prop="subject" label="主题" width="180" align="center"/>
+        <el-table-column prop="address" label="地址" min-width="220" align="center"/>
+        <el-table-column prop="submitTime" label="提交时间" width="100" align="center"/>
+        <el-table-column prop="status" label="状态" width="80" align="center">
           <template #default="scope">
             <el-tag
               :type="scope.row.status === 'read' ? 'success' : 'primary'"
@@ -59,7 +77,8 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column label="操作" width="200" fixed="right" align="center">
+
           <template #default="scope">
             <el-button
               type="primary"
@@ -216,6 +235,11 @@ const paginatedMessages = computed(() => {
   return filteredMessages.value.slice(startIndex, endIndex)
 })
 
+// 未读消息数量
+const unreadCount = computed(() => {
+  return messages.value.filter(msg => msg.status === 'unread').length
+})
+
 // 页面加载时获取数据
 onMounted(() => {
   fetchMessages()
@@ -305,35 +329,153 @@ function handleCurrentChange(current: number) {
 
 <style scoped>
 .message-management-container {
-  padding: 24px;
-  background-color: #f5f5f5;
-  min-height: 100vh;
+  background-color: #f8fafc;
 }
 
-.page-header {
-  margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #e8e8e8;
+/* 现代简洁标题区域 */
+.page-header-modern {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px 32px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
 }
 
-.page-header h2 {
+.header-content {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 0;
-  font-size: 20px;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.icon-wrapper {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+.icon-wrapper .el-icon {
+  font-size: 24px;
+  color: white;
+}
+
+.header-info h1 {
+  margin: 0 0 4px 0;
+  font-size: 24px;
   font-weight: 600;
-  color: #262626;
+  color: #1e293b;
+  line-height: 1.3;
 }
 
-.subtitle {
-  margin: 8px 0 0 0;
+.page-description {
+  margin: 0;
   font-size: 14px;
-  color: #666;
+  color: #64748b;
 }
 
-.search-filter-container {
-  margin-bottom: 24px;
+.header-stats {
+  display: flex;
+  gap: 32px;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-number {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* 搜索区域 */
+.search-section {
+  margin-bottom: 10px;
+}
+
+.search-container {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px 24px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.search-input-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 500px;
+}
+
+.search-icon {
+  font-size: 18px;
+  color: #64748b;
+}
+
+.modern-input :deep(.el-input__wrapper) {
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  box-shadow: none;
+  transition: all 0.2s ease;
+}
+
+.modern-input :deep(.el-input__wrapper):hover {
+  border-color: #3b82f6;
+  background: white;
+}
+
+.modern-input :deep(.el-input__wrapper).is-focus {
+  border-color: #3b82f6;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.modern-date-picker {
+  min-width: 280px;
+}
+
+.modern-date-picker :deep(.el-input__wrapper) {
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  box-shadow: none;
+  transition: all 0.2s ease;
+}
+
+.modern-date-picker :deep(.el-input__wrapper):hover {
+  border-color: #3b82f6;
+  background: white;
 }
 
 .message-list-card {
@@ -382,29 +524,5 @@ function handleCurrentChange(current: number) {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-}
-
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .message-management-container {
-    padding: 16px;
-  }
-
-  .search-filter-container .el-row {
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .search-filter-container .el-col {
-    width: 100%;
-  }
-
-  .message-list-card .el-table {
-    font-size: 12px;
-  }
-
-  .pagination-container {
-    justify-content: center;
-  }
 }
 </style>

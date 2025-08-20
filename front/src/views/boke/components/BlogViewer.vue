@@ -18,14 +18,14 @@
         </el-tag>
         <div class="tags">
           <el-tag
-            v-for="tag in blog.tags"
-            :key="tag"
+            v-for="tag in (typeof blog.tags === 'string' ? blog.tags.split(',').filter(t => t.trim()) : blog.tags)"
+            :key="tag.trim()"
             type="info"
             effect="light"
-            class="!px-2 !py-0.5 !text-xs !border-0 !bg-blue-50 !text-blue-600"
+            class="!px-2 !py-0.5 !text-xs !border-0 !bg-blue-50 !text-blue-600 hover:!bg-blue-100 transition-colors"
             size="small"
           >
-            {{ tag }}
+            {{ tag.trim() }}
           </el-tag>
         </div>
       </div>

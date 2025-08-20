@@ -50,7 +50,7 @@ export const asyncRoutes: RouteRecordRaw[] = [
         path: '/boke/info',
         name: 'boke_info',
         component: () => import('@/views/boke/index.vue'),
-        meta: { title: '博客管理', icon: 'home' }
+        meta: { title: '博客管理', icon: 'boke' }
       }
     ]
   },
@@ -63,7 +63,7 @@ export const asyncRoutes: RouteRecordRaw[] = [
         path: '/method/info',
         name: 'method_info',
         component: () => import('@/views/method/index.vue'),
-        meta: { title: '算法集合', icon: 'home' }
+        meta: { title: '算法集合', icon: 'computed' }
       }
     ]
   },
@@ -125,7 +125,7 @@ export const asyncRoutes: RouteRecordRaw[] = [
   {
     path: '/person',
     component: shallowRef(Layout),
-    meta: { title: '个人信息', icon: 'user' },
+    meta: { title: '个人信息', icon: 'person' },
     name: 'person',
     redirect: '/person/info',
     children: [
@@ -158,7 +158,7 @@ export const asyncRoutes: RouteRecordRaw[] = [
         path: '/front',
         name: 'front',
         component: () => import('@/views/front/index.vue'),
-        meta: { title: '前端展示', icon: 'home' }
+        meta: { title: '前端展示', icon: 'front' }
       }
     ]
   }

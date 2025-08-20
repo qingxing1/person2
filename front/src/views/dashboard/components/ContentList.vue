@@ -25,6 +25,8 @@
 </template>
 
 <script lang="ts" setup>
+import type { Component } from 'vue'
+
 interface ContentItem {
   id: number
   title: string
@@ -34,7 +36,7 @@ interface ContentItem {
 interface Props {
   title: string
   items: ContentItem[]
-  icon: string
+  icon: Component
   metaFields: string[]
 }
 

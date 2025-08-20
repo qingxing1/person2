@@ -5,28 +5,28 @@
       <el-row :gutter="16">
         <el-col :span="6" :sm="12" :xs="24" :lg="6">
           <StatCard 
-            icon="View" 
+            :icon="View" 
             :number="websiteStats.todayVisits" 
             label="今日访问量" 
           />
         </el-col>
         <el-col :span="6" :sm="12" :xs="24" :lg="6">
           <StatCard 
-            icon="Document" 
+            :icon="Document" 
             :number="websiteStats.totalBlogs" 
             label="博客总数" 
           />
         </el-col>
         <el-col :span="6" :sm="12" :xs="24" :lg="6">
           <StatCard 
-            icon="Edit" 
+            :icon="Edit" 
             :number="websiteStats.totalProblems" 
             label="算法题数" 
           />
         </el-col>
         <el-col :span="6" :sm="12" :xs="24" :lg="6">
           <StatCard 
-            icon="Clock" 
+            :icon="Clock" 
             :number="pendingTodos.length" 
             label="待办事项" 
           />
@@ -54,7 +54,7 @@
                 <ContentList 
                   title="最新博客"
                   :items="recentBlogs"
-                  icon="Document"
+                  :icon="Document"
                   :meta-fields="['date', 'views']"
                   @more-click="goToBlogs"
                 />
@@ -63,7 +63,7 @@
                 <ContentList 
                   title="最新算法题"
                   :items="recentProblems"
-                  icon="Edit"
+                  :icon="Edit"
                   :meta-fields="['difficulty', 'date']"
                   @more-click="goToProblems"
                 />
@@ -102,6 +102,7 @@
 <script lang="ts" setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { View, Document, Edit, Clock, EditPen, CirclePlus, TrendCharts, Setting } from '@element-plus/icons-vue'
 import StatCard from './components/StatCard.vue'
 import TodoList from './components/TodoList.vue'
 import QuickActions from './components/QuickActions.vue'
@@ -155,10 +156,10 @@ const recentProblems = ref([
 
 // 快捷操作
 const quickActions = ref([
-  { key: 'write-blog', label: '写博客', icon: 'EditPen' },
-  { key: 'add-problem', label: '添加算法题', icon: 'CirclePlus' },
-  { key: 'analytics', label: '数据分析', icon: 'TrendCharts' },
-  { key: 'settings', label: '网站设置', icon: 'Setting' }
+  { key: 'write-blog', label: '写博客', icon: EditPen },
+  { key: 'add-problem', label: '添加算法题', icon: CirclePlus },
+  { key: 'analytics', label: '数据分析', icon: TrendCharts },
+  { key: 'settings', label: '网站设置', icon: Setting }
 ])
 
 // 添加待办事项

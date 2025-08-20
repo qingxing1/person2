@@ -1,31 +1,54 @@
 <template>
   <div class="collect-management-container">
     <!-- 页面标题 -->
-    <div class="page-header">
-      <h2>
-        <el-icon><Star /></el-icon>
-        收藏管理
-      </h2>
-      <p class="subtitle">管理您收藏的网站和链接，添加备注便于记忆</p>
+    <div class="page-header-modern">
+      <div class="header-container">
+        <div class="header-left">
+          <div class="icon-badge">
+            <el-icon class="header-icon"><Star /></el-icon>
+          </div>
+          <div class="header-info">
+            <h1 class="page-title">收藏管理</h1>
+            <p class="page-description">集中管理您的网站收藏，支持分类整理和智能搜索</p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <el-button type="primary" @click="showAddDialog = true" :icon="Plus" class="add-btn">
+            <span class="btn-content">
+              添加收藏
+            </span>
+          </el-button>
+        </div>
+      </div>
     </div>
 
-    <!-- 搜索和添加区域 -->
-    <div class="search-add-container">
-      <el-row :gutter="20">
-        <el-col :span="16">
+    <!-- 搜索和筛选区域 -->
+    <div class="mb-2!">
+      <div class="search-container">
+        <div class="search-box">
+          <div class="search-prefix">
+            <el-icon><Search /></el-icon>
+          </div>
           <el-input
             v-model="searchKeyword"
-            placeholder="搜索网站名称、网址或备注"
-            prefix-icon="Search"
+            placeholder="搜索网站名称、网址或备注..."
             clearable
+            class="modern-search"
+            size="large"
           />
-        </el-col>
-        <el-col :span="8">
-          <el-button type="primary" @click="showAddDialog = true" :icon="Plus">
-            添加收藏
-          </el-button>
-        </el-col>
-      </el-row>
+        </div>
+        <div class="filter-chips">
+          <el-tag
+            v-for="category in categories"
+            :key="category.value"
+            :type="getCategoryType(category.value)"
+            class="category-chip"
+            effect="light"
+          >
+            {{ category.label }}
+          </el-tag>
+        </div>
+      </div>
     </div>
 
     <!-- 收藏列表 -->
@@ -38,8 +61,9 @@
         highlight-current-row
         empty-text="暂无收藏内容"
       >
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column label="网站图标" width="80">
+        <el-table-column prop="id" label="ID" width="60" align="center" />
+        <el-table-column label="网站图标" width="100" align="center">
+
           <template #default="scope">
             <div class="website-icon">
               <img 
@@ -54,8 +78,8 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="name" label="网站名称" width="150" />
-        <el-table-column prop="url" label="网址">
+        <el-table-column prop="name" label="网站名称" width="150" align="center" />
+        <el-table-column prop="url" label="网址" width="200" align="center">
           <template #default="scope">
             <el-link 
               :href="scope.row.url" 
@@ -67,16 +91,18 @@
             </el-link>
           </template>
         </el-table-column>
-        <el-table-column prop="category" label="分类" width="100">
+        <el-table-column prop="category" label="分类" width="100" align="center">
+
           <template #default="scope">
             <el-tag size="small" :type="getCategoryType(scope.row.category)">
               {{ scope.row.category }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="description" label="备注" min-width="200" />
-        <el-table-column prop="createTime" label="收藏时间" width="180" />
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column prop="description" label="备注" min-width="200" align="center" />
+        <el-table-column prop="createTime" label="收藏时间" width="100" align="center" />
+        <el-table-column label="操作" width="180" fixed="right" align="center">
+
           <template #default="scope">
             <el-button
               type="primary"
@@ -168,7 +194,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Star, Plus, Edit, Delete, Link } from '@element-plus/icons-vue'
+import { Star, Plus, Edit, Delete, Link,Search } from '@element-plus/icons-vue'
 
 // 定义收藏类型
 interface CollectItem {
@@ -426,35 +452,165 @@ function handleCurrentChange(current: number) {
 
 <style scoped>
 .collect-management-container {
-  padding: 24px;
   background-color: #f5f5f5;
-  min-height: 100vh;
 }
 
-.page-header {
-  margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #e8e8e8;
+/* 全新的现代设计风格 */
+.page-header-modern {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 32px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 
-.page-header h2 {
+.header-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.icon-badge {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+}
+
+.header-icon {
+  font-size: 28px;
+  color: white;
+}
+
+.header-info h1 {
+  margin: 0 0 8px 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.2;
+}
+
+.page-description {
+  margin: 0;
+  font-size: 15px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.header-stats {
+  display: flex;
+  gap: 32px;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-number {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.add-btn {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  border: none;
+  border-radius: 12px;
+  padding: 16px 24px;
+  font-weight: 600;
+  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+  transition: all 0.2s ease;
+}
+
+.add-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 15px -3px rgba(59, 130, 246, 0.4);
+}
+
+.btn-content {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 0;
+}
+
+.search-container {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.search-prefix {
+  color: #64748b;
   font-size: 20px;
-  font-weight: 600;
-  color: #262626;
 }
 
-.subtitle {
-  margin: 8px 0 0 0;
-  font-size: 14px;
-  color: #666;
+.modern-search :deep(.el-input__wrapper) {
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  box-shadow: none;
+  transition: all 0.2s ease;
 }
 
-.search-add-container {
-  margin-bottom: 24px;
+.modern-search :deep(.el-input__wrapper):hover {
+  border-color: #3b82f6;
+  background: white;
+}
+
+.modern-search :deep(.el-input__wrapper).is-focus {
+  border-color: #3b82f6;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.filter-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.category-chip {
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.category-chip:hover {
+  transform: translateY(-1px);
 }
 
 .collect-list-card {
@@ -470,7 +626,12 @@ function handleCurrentChange(current: number) {
   align-items: center;
   justify-content: center;
 }
+:deep(.el-table .cell) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
+}
 .website-icon img {
   width: 100%;
   height: 100%;
@@ -506,13 +667,56 @@ function handleCurrentChange(current: number) {
     padding: 16px;
   }
 
-  .search-add-container .el-row {
-    flex-direction: column;
-    gap: 16px;
+  .page-header {
+    margin-bottom: 24px;
+    padding: 20px 0;
   }
 
-  .search-add-container .el-col {
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 0 20px;
+  }
+
+  .title-section {
+    gap: 12px;
+  }
+
+  .title-icon-wrapper {
+    width: 40px;
+    height: 40px;
+  }
+
+  .title-icon {
+    font-size: 20px;
+  }
+
+  .title-text h2 {
+    font-size: 20px;
+  }
+
+  .header-actions {
     width: 100%;
+  }
+
+  .header-actions .el-button {
+    width: 100%;
+  }
+
+  .search-filter-section {
+    margin-bottom: 24px;
+  }
+
+  .search-card {
+    padding: 16px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .search-icon {
+    display: none;
   }
 
   .collect-list-card .el-table {

@@ -16,14 +16,14 @@
           <template #default="{ row }">
             <div class="flex flex-wrap gap-1">
               <el-tag
-                v-for="tag in row.tags"
-                :key="tag"
+                v-for="tag in (typeof row.tags === 'string' ? row.tags.split(',').filter(t => t.trim()) : row.tags)"
+                :key="tag.trim()"
                 type="info"
                 effect="light"
                 class="!px-2 !py-0.5 !text-xs !border-0 !bg-blue-50 !text-blue-600 hover:!bg-blue-100 transition-colors"
                 size="small"
               >
-                {{ tag }}
+                {{ tag.trim() }}
               </el-tag>
             </div>
           </template>
@@ -70,11 +70,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { Plus } from '@element-plus/icons-vue'
+import { getBlogList,getBlogDetail } from '@/api/boke'
+
 
 import type { Blog } from '../types/blog'
 
 const props = defineProps<{
-  blogs: Blog[]
+  // blogs: Blog[]
   loading: boolean
   total: number
 }>()
@@ -86,6 +88,8 @@ const emit = defineEmits<{
   delete: [blog: Blog]
   pageChange: [page: number, size: number]
 }>()
+// 博客列表
+const blogs = ref<Blog[]>([])
 
 const currentPage = ref(1)
 const pageSize = ref(10)
@@ -113,6 +117,10 @@ const handleSizeChange = (size: number) => {
 const handleCurrentChange = (page: number) => {
   emit('pageChange', page, pageSize.value)
 }
+onMounted(async() => {
+  const res:any = await getBlogList()
+  blogs.value = res.data
+})
 </script>
 
 <style scoped lang="scss">
