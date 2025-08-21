@@ -10,16 +10,13 @@
 
                     <div class="toolbar-left">
                         <el-input v-model="searchKeyword" placeholder="搜索博客标题" style="width: 300px" clearable
-                            @clear="handleSearch" @keyup.enter="handleSearch">
+                            @clear="handleSearch" @input="handleSearch">
                             <template #prefix>
                                 <el-icon>
                                     <Search />
                                 </el-icon>
                             </template>
                         </el-input>
-                        <el-button type="primary" @click="handleSearch" style="margin-left: 10px">
-                            搜索
-                        </el-button>
                     </div>
 
                     <div class="toolbar-right">
@@ -34,15 +31,16 @@
             </div>
 
             <!-- 博客列表 -->
-            <BlogList :blogs="filteredBlogs" :loading="loading" :total="total" @add="handleAddBlog"
-                @view="handleViewBlog" @edit="handleEditBlog" @delete="handleDeleteBlog"
-                @page-change="handlePageChange" />
+            <BlogList :loading="loading" :search-keyword="searchKeyword" @view="handleViewBlog" @add="handleAddBlog"
+                @edit="handleEditBlog" @page-change="handlePageChange" />
+
+
         </div>
 
         <!-- 博客编辑器抽屉 -->
-        <el-drawer v-model="showEditor" :title="isEdit ? '编辑博客' : '新增博客'" size="75%" direction="rtl" destroy-on-close>
-            <BlogEditor :visible="showEditor" :blog="currentBlog" :is-edit="isEdit" @close="handleEditorClose"
-                @submit="handleEditorSubmit" ref="editorRef" />
+        <el-drawer v-model="showEditor" :title="isEdit ? '编辑博客' : '新增博客'" size="75%" direction="rtl">
+            <BlogEditor :visible="showEditor" :blog="currentBlog" :is-edit="isEdit" :current-blog-id="currentBlog?.id" @close="handleEditorClose" />
+
         </el-drawer>
 
         <!-- 博客查看器 -->
@@ -56,127 +54,51 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Upload } from '@element-plus/icons-vue'
 import BlogList from './components/BlogList.vue'
 import BlogEditor from './components/BlogEditor.vue'
 import BlogViewer from './components/BlogViewer.vue'
 import MarkdownUploader from './components/MarkdownUploader.vue'
+import { getBokeList } from '@/api/boke'
+
 
 import type { Blog, BlogFormData } from './types/blog'
 
-// 状态管理
-const loading = ref(false)
-const showEditor = ref(false)
-const showViewer = ref(false)
-const showUploader = ref(false)
-const isEdit = ref(false)
-const searchKeyword = ref('')
+// 状态管理 - 控制各个组件的显示/隐藏和数据状态
+const loading = ref(false)          // 全局加载状态，用于显示加载动画
+const showEditor = ref(false)       // 控制博客编辑器抽屉的显示/隐藏
+const showViewer = ref(false)       // 控制博客查看器弹窗的显示/隐藏
+const showUploader = ref(false)    // 控制Markdown上传器弹窗的显示/隐藏
+const isEdit = ref(false)          // 标记当前是编辑模式还是新增模式
+const searchKeyword = ref('')       // 搜索关键词，用于过滤博客列表
 
 const currentBlog = ref<Blog | undefined>()
-const editorRef = ref<InstanceType<typeof BlogEditor>>()
 
-// 模拟数据
-const blogs = ref<Blog[]>([
-    {
-        id: 1,
-        title: 'Vue3组合式API最佳实践',
-        author: '张三',
-        tags: ['Vue3', '组合式API', '最佳实践'],
-        category: '技术',
-        createTime: '2024-01-15 14:30:00',
-        status: 'published',
-        content: '# Vue3组合式API最佳实践\n\n## 介绍\n\nVue 3 引入了 Composition API，这是一种全新的编写 Vue 组件的方式...\n\n## 核心概念\n\n### 1. setup() 函数\n```javascript\nimport { ref, reactive } from \'vue\'\n\nexport default {\n  setup() {\n    const count = ref(0)\n    const state = reactive({\n      name: \'Vue 3\',\n      version: \'3.x\'\n    })\n\n    return {\n      count,\n      state\n    }\n  }\n}\n```\n\n### 2. 生命周期钩子\n\nComposition API 提供了与 Options API 对应的生命周期钩子...'
-    },
-    {
-        id: 2,
-        title: 'TypeScript在前端开发中的应用',
-        author: '李四',
-        tags: ['TypeScript', '前端开发'],
-        category: '技术',
-        createTime: '2024-01-14 10:15:00',
-        status: 'published',
-        content: '# TypeScript在前端开发中的应用\n\n## 什么是TypeScript\n\nTypeScript是JavaScript的超集...'
-    },
-    {
-        id: 3,
-        title: '我的2024年度总结',
-        author: '王五',
-        tags: ['总结', '年度'],
-        category: '生活',
-        createTime: '2024-01-10 20:00:00',
-        status: 'draft',
-        content: '# 我的2024年度总结\n\n## 工作方面\n\n2024年对我来说是充实的一年...'
-    },
-    {
-        id: 4,
-        title: '2024年1月1日',
-        author: '赵六',
-        tags: ['总结', '年度'],
-        category: '生活',
-        createTime: '2024-01-01 00:00:00',
-        status: 'published',
-        content: '# 2024年1月1日\n\n## 生活方面\n\n2024年1月1日是一个新的开始...'
-    }
-])
 
-const total = ref(4)
-
-// 计算属性
-const filteredBlogs = computed(() => {
-    if (!searchKeyword.value) return blogs.value
-    const keyword = searchKeyword.value.toLowerCase()
-    return blogs.value.filter(blog =>
-        blog.title.toLowerCase().includes(keyword)
-    )
-})
-
-// 事件处理
-const handleAddBlog = () => {
-    isEdit.value = false
-    currentBlog.value = undefined
+// 编辑博客
+const handleEditBlog = (blog: Blog) => {
+    isEdit.value = true
+    // 确保传递的是一个新的对象引用，以触发响应式更新
+    currentBlog.value = JSON.parse(JSON.stringify(blog))
+    showViewer.value = false
+    // 最后再显示编辑器，确保数据已经准备好
     showEditor.value = true
 }
 
+// 查看博客
 const handleViewBlog = (blog: Blog) => {
     currentBlog.value = blog
     showViewer.value = true
 }
 
-const handleEditBlog = (blog: Blog) => {
-    isEdit.value = true
-    currentBlog.value = blog
+// 新增博客
+const handleAddBlog = () => {
+    isEdit.value = false
+    currentBlog.value = undefined
     showEditor.value = true
     showViewer.value = false
-}
-
-const handleDeleteBlog = async (blog: Blog) => {
-    try {
-        await ElMessageBox.confirm(
-            `确定要删除博客 "${blog.title}" 吗？`,
-            '删除确认',
-            {
-                confirmButtonText: '确定',
-                cancelButtonText: '取消',
-                type: 'warning'
-            }
-        )
-
-        loading.value = true
-        // 模拟删除操作
-        setTimeout(() => {
-            const index = blogs.value.findIndex(b => b.id === blog.id)
-            if (index > -1) {
-                blogs.value.splice(index, 1)
-                total.value--
-                ElMessage.success('删除成功')
-            }
-            loading.value = false
-        }, 500)
-    } catch (error) {
-        console.log('取消删除')
-    }
 }
 
 const handlePageChange = (page: number, size: number) => {
@@ -185,8 +107,8 @@ const handlePageChange = (page: number, size: number) => {
 }
 
 const handleSearch = () => {
-    console.log('搜索:', searchKeyword.value)
-    // 这里可以调用搜索API
+  // 搜索逻辑由BlogList组件内部处理，这里不需要额外操作
+  // searchKeyword的变化会自动触发BlogList的重新加载
 }
 
 const handleEditorClose = () => {
@@ -194,40 +116,6 @@ const handleEditorClose = () => {
     currentBlog.value = undefined
 }
 
-const handleEditorSubmit = (data: BlogFormData) => {
-    loading.value = true
-
-    setTimeout(() => {
-        if (isEdit.value && currentBlog.value) {
-            // 编辑模式
-            const index = blogs.value.findIndex(b => b.id === currentBlog.value!.id)
-            if (index > -1) {
-                blogs.value[index] = {
-                    ...blogs.value[index],
-                    ...data,
-                    tags: data.tags || []
-                }
-                ElMessage.success('更新成功')
-            }
-        } else {
-            // 新增模式
-            const newBlog: Blog = {
-                id: Math.max(...blogs.value.map(b => b.id)) + 1,
-                ...data,
-                tags: data.tags || [],
-                author: '当前用户',
-                createTime: new Date().toLocaleString('zh-CN')
-            }
-            blogs.value.unshift(newBlog)
-            total.value++
-            ElMessage.success('发布成功')
-        }
-
-        loading.value = false
-        showEditor.value = false
-        currentBlog.value = undefined
-    }, 1000)
-}
 
 const handleViewerClose = () => {
     showViewer.value = false
@@ -246,7 +134,7 @@ const handleUploadSuccess = (content: string, fileName: string) => {
     // 创建新博客
     const newBlog: BlogFormData = {
         title,
-        tags: [],
+        tags: '',
         category: '其他',
         status: 'draft',
         content

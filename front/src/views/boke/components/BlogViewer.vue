@@ -1,34 +1,34 @@
 <template>
-  <el-dialog
-    v-model="visible"
-    width="70%"
-    top="5vh"
-    :close-on-click-modal="false"
-    @close="handleClose"
-  >
+  <el-dialog v-model="visible" width="70%" top="5vh" :close-on-click-modal="false" @close="handleClose">
     <div class="blog-viewer" v-if="blog">
       <div class="blog-header">
         <h2 class="blog-title">{{ blog.title }}</h2>
         <div class="blog-meta">
-        <span class="author">作者：{{ blog.author }}</span>
-        <span class="category">分类：{{ blog.category }}</span>
-        <span class="time">发布时间：{{ blog.createTime }}</span>
-        <el-tag :type="blog.status === 'published' ? 'success' : 'info'">
-          {{ blog.status === 'published' ? '已发布' : '草稿' }}
-        </el-tag>
-        <div class="tags">
-          <el-tag
-            v-for="tag in (typeof blog.tags === 'string' ? blog.tags.split(',').filter(t => t.trim()) : blog.tags)"
-            :key="tag.trim()"
-            type="info"
-            effect="light"
-            class="!px-2 !py-0.5 !text-xs !border-0 !bg-blue-50 !text-blue-600 hover:!bg-blue-100 transition-colors"
-            size="small"
-          >
-            {{ tag.trim() }}
-          </el-tag>
+          <span class="author !mr-8">作者：{{ blog.author }}</span>
+          <span class="!mr-8">
+            分类：{{ blog.category }}
+          </span>
+          <span class="time !mr-8">发布时间：{{ blog.createTime }}</span>
+          <span v-if="blog.updateTime" class="!mr-8">更新时间：{{ blog.updateTime }}</span>
+          <span>
+            状态： <el-tag :type="blog.status === 'published' ? 'success' : 'info'">
+              {{ blog.status === 'published' ? '已发布' : '草稿' }}
+            </el-tag>
+          </span>
+          <div class="tags !mt-3">
+            <span class="!mr-8">
+              阅读量：{{ blog.viewCount }}
+            </span>
+            标签：
+            <el-tag
+              v-for="tag in (typeof blog.tags === 'string' ? blog.tags.split(',').filter((t: string) => t.trim()) : blog.tags)"
+              :key="tag.trim()" type="info" effect="light"
+              class="!px-2 !py-0.5 !text-xs !border-0 !bg-blue-50 !text-blue-600 hover:!bg-blue-100 transition-colors"
+              size="small">
+              {{ tag.trim() }}
+            </el-tag>
+          </div>
         </div>
-      </div>
       </div>
 
       <div class="blog-content">
@@ -48,8 +48,9 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { marked } from 'marked'
-
 import type { Blog } from '../types/blog'
+import emitter from '@/utils/mitt'
+
 
 const props = defineProps<{
   visible: boolean
@@ -78,10 +79,7 @@ const handleClose = () => {
 }
 
 const handleEdit = () => {
-  if (props.blog) {
-    emit('edit', props.blog)
-    handleClose()
-  }
+  emit('edit', props.blog as Blog)
 }
 </script>
 
@@ -102,23 +100,10 @@ const handleEdit = () => {
     }
 
     .blog-meta {
-      display: flex;
-      gap: 15px;
-      align-items: center;
       font-size: 14px;
       color: var(--el-text-color-secondary);
-      flex-wrap: wrap;
 
       span {
-        &::before {
-          content: '';
-          display: inline-block;
-          width: 1px;
-          height: 12px;
-          background-color: var(--el-border-color);
-          margin-right: 15px;
-        }
-
         &:first-child::before {
           display: none;
         }
@@ -138,17 +123,39 @@ const handleEdit = () => {
       line-height: 1.8;
       color: var(--el-text-color-primary);
 
-      :deep(h1), :deep(h2), :deep(h3), :deep(h4), :deep(h5), :deep(h6) {
+      :deep(h1),
+      :deep(h2),
+      :deep(h3),
+      :deep(h4),
+      :deep(h5),
+      :deep(h6) {
         margin: 20px 0 10px 0;
         font-weight: bold;
       }
 
-      :deep(h1) { font-size: 28px; }
-      :deep(h2) { font-size: 24px; }
-      :deep(h3) { font-size: 20px; }
-      :deep(h4) { font-size: 18px; }
-      :deep(h5) { font-size: 16px; }
-      :deep(h6) { font-size: 14px; }
+      :deep(h1) {
+        font-size: 28px;
+      }
+
+      :deep(h2) {
+        font-size: 24px;
+      }
+
+      :deep(h3) {
+        font-size: 20px;
+      }
+
+      :deep(h4) {
+        font-size: 18px;
+      }
+
+      :deep(h5) {
+        font-size: 16px;
+      }
+
+      :deep(h6) {
+        font-size: 14px;
+      }
 
       :deep(p) {
         margin: 10px 0;
@@ -181,7 +188,8 @@ const handleEdit = () => {
         color: var(--el-text-color-secondary);
       }
 
-      :deep(ul), :deep(ol) {
+      :deep(ul),
+      :deep(ol) {
         margin: 10px 0;
         padding-left: 25px;
       }
@@ -203,7 +211,8 @@ const handleEdit = () => {
         margin: 15px 0;
       }
 
-      :deep(th), :deep(td) {
+      :deep(th),
+      :deep(td) {
         border: 1px solid var(--el-border-color);
         padding: 8px 12px;
         text-align: left;

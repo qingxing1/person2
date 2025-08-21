@@ -21,6 +21,20 @@ export class BlogService {
     private readonly config: ConfigService
   ) {}
 
+  /** 格式化日期时间为字符串 */
+  private formatDateTime(date: Date): string {
+    if (!date) return '';
+    
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  }
+
   /** 创建博客 */
   async create(dto: CreateBlogDto): Promise<ResultData> {
     const blog = plainToInstance(BlogEntity, dto);
@@ -28,7 +42,15 @@ export class BlogService {
       return await transactionalEntityManager.save<BlogEntity>(blog);
     });
     if (!res) return ResultData.fail(AppHttpCode.SERVICE_ERROR, '创建失败，请稍后重试');
-    return ResultData.ok(res);
+    
+    // 格式化时间
+    const formattedBlog = {
+      ...res,
+      createTime: this.formatDateTime(res.createTime),
+      updateTime: this.formatDateTime(res.updateTime)
+    };
+    
+    return ResultData.ok(formattedBlog);
   }
 
   /** 更新博客 */
@@ -58,7 +80,7 @@ export class BlogService {
   }
 
   /** 查询所有博客 */
-  async findAll(query?: { title?: string, category?: string, status?: string }): Promise<ResultData> {
+  async findAll(query?: { title?: string, category?: string, status?: string, page?: number, size?: number }): Promise<ResultData> {
     const where: any = {};
     
     if (query?.title) {
@@ -73,12 +95,30 @@ export class BlogService {
       where.status = query.status;
     }
     
-    const blogs = await this.blogRepo.find({
+    const page = query?.page || 1;
+    const size = query?.size || 10;
+    const skip = (page - 1) * size;
+    
+    const [blogs, total] = await this.blogRepo.findAndCount({
       where,
-      order: { createTime: 'DESC' }
+      order: { createTime: 'DESC' },
+      skip,
+      take: size
     });
     
-    return ResultData.ok(blogs);
+    // 格式化时间
+    const formattedBlogs = blogs.map(blog => ({
+      ...blog,
+      createTime: this.formatDateTime(blog.createTime),
+      updateTime: this.formatDateTime(blog.updateTime)
+    }));
+    
+    return ResultData.ok({
+      list: formattedBlogs,
+      total,
+      page,
+      size
+    });
   }
 
   /** 查询单个博客 */
@@ -90,7 +130,14 @@ export class BlogService {
     blog.viewCount += 1;
     await this.blogRepo.update(id, { viewCount: blog.viewCount });
     
-    return ResultData.ok(blog);
+    // 格式化时间
+    const formattedBlog = {
+      ...blog,
+      createTime: this.formatDateTime(blog.createTime),
+      updateTime: this.formatDateTime(blog.updateTime)
+    };
+    
+    return ResultData.ok(formattedBlog);
   }
 
   /** 上传博客图片 */

@@ -4,7 +4,9 @@
       <div class="header-content">
         <div class="header-info">
           <h2>
-            <el-icon><Grid /></el-icon>
+            <el-icon>
+              <Grid />
+            </el-icon>
             算法题管理
           </h2>
           <p class="subtitle">算法题库管理系统 - 统一管理平台</p>
@@ -15,15 +17,15 @@
             <div class="stat-label">总题目</div>
           </div>
           <div class="stat-item">
-            <div class="stat-number success">{{ problems.filter(p => p.difficulty === '简单').length }}</div>
+            <div class="stat-number success">{{problems.filter(p => p.difficulty === '简单').length}}</div>
             <div class="stat-label">简单</div>
           </div>
           <div class="stat-item">
-            <div class="stat-number warning">{{ problems.filter(p => p.difficulty === '中等').length }}</div>
+            <div class="stat-number warning">{{problems.filter(p => p.difficulty === '中等').length}}</div>
             <div class="stat-label">中等</div>
           </div>
           <div class="stat-item">
-            <div class="stat-number danger">{{ problems.filter(p => p.difficulty === '困难').length }}</div>
+            <div class="stat-number danger">{{problems.filter(p => p.difficulty === '困难').length}}</div>
             <div class="stat-label">困难</div>
           </div>
         </div>
@@ -31,18 +33,71 @@
     </div>
 
     <div class="content-area">
+      <!-- 搜索和筛选区域 -->
+      <div class="search-filter-section">
+        <div class="search-row">
+          <el-input
+            v-model="searchTitle"
+            placeholder="请输入题目名称搜索"
+            clearable
+            class="search-input"
+            @clear="searchTitle = ''"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+          
+          <el-select
+            v-model="searchDifficulty"
+            placeholder="选择难度"
+            clearable
+            class="filter-select"
+            @clear="searchDifficulty = ''"
+          >
+            <el-option label="全部难度" value="" />
+            <el-option label="简单" value="简单" />
+            <el-option label="中等" value="中等" />
+            <el-option label="困难" value="困难" />
+          </el-select>
+          
+          <el-select
+            v-model="searchCategory"
+            placeholder="选择分类"
+            clearable
+            class="filter-select"
+            @clear="searchCategory = ''"
+          >
+           <div v-for="category in CATEGORY" :key="category">
+            <el-option :label="category" :value="category" />
+           </div>
+          </el-select>
+          
+          <el-button type="primary" @click="currentPage = 1; initMethodList()">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+          
+          <el-button @click="resetFilters">
+            <el-icon><Refresh /></el-icon>
+            重置
+          </el-button>
+        </div>
+      </div>
+
       <!-- 题目列表 -->
       <ProblemList :problems="problems" :loading="loading" :current-page="currentPage" :page-size="pageSize"
         :total="total" @add-problem="showAddDialog = true" @view-details="handleViewDetails"
         @edit-problem="handleEditProblem" @delete-problem="handleDeleteProblem" @page-change="handlePageChange"
-      @update:page-size="handleSizeChange" />
+        @update:page-size="handleSizeChange" />
     </div>
 
     <!-- 添加/编辑对话框 -->
     <el-dialog v-model="showAddDialog" :title="isEdit ? '编辑题目' : '添加题目'" width="80%" :close-on-click-modal="false">
       <div>
         <ProblemForm v-model="currentProblem" :is-edit="isEdit" :loading="formLoading" @submit="handleSubmit"
-          @cancel="showAddDialog = false" />
+          @cancel="showAddDialog = false" :categories="CATEGORY" />
+
       </div>
     </el-dialog>
 
@@ -79,13 +134,17 @@
 <script lang="ts" setup>
 import { ref, reactive, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Grid } from '@element-plus/icons-vue'
+import { Grid, Search, Refresh } from '@element-plus/icons-vue'
 import ProblemList from './components/ProblemList.vue'
 import ProblemDetail from './components/ProblemDetail.vue'
 import ProblemForm from './components/ProblemForm.vue'
+import { getMethodList, deleteMethod, addMethod, updateMethod } from '@/api/method'
+import type { Category } from '@/api/method'
+
+
 
 interface Problem {
-  id: number
+  id: string
   title: string
   difficulty: '简单' | '中等' | '困难'
   category: string
@@ -93,8 +152,9 @@ interface Problem {
   solution?: string
   answer?: string
   createdAt: string
+  updatedAt: string
 }
-
+const CATEGORY: Category[] = ['数组', '字符串', '链表', '树', '哈希表', '动态规划', '贪心', '回溯', '排序', '查找']
 // 状态管理
 const problems = ref<Problem[]>([])
 const loading = ref(false)
@@ -108,58 +168,24 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 
+// 筛选条件
+const searchTitle = ref('')
+const searchDifficulty = ref('')
+const searchCategory = ref('')
+
 const currentProblem = reactive<Problem>({
-  id: 0,
+  id: '',
   title: '',
   difficulty: '中等',
   category: '',
   description: '',
   solution: '',
   answer: '',
-  createdAt: ''
+  createdAt: '',
+  updatedAt: ''
 })
 
-// 模拟数据
-const mockProblems: Problem[] = [
-  {
-    id: 1,
-    title: '两数之和',
-    difficulty: '简单',
-    category: '数组',
-    description: '给定一个整数数组 nums 和一个整数目标值 target，请你在该数组中找出 和为目标值 target 的那两个整数，并返回它们的数组下标。',
-    solution: '使用哈希表存储已经遍历过的数字及其索引，时间复杂度O(n)',
-    answer: '```javascript\nfunction twoSum(nums, target) {\n  const map = new Map();\n  for (let i = 0; i < nums.length; i++) {\n    const complement = target - nums[i];\n    if (map.has(complement)) {\n      return [map.get(complement), i];\n    }\n    map.set(nums[i], i);\n  }\n}\n```',
-    createdAt: '2024-01-15'
-  },
-  {
-    id: 2,
-    title: '最长回文子串',
-    difficulty: '中等',
-    category: '字符串',
-    description: '给你一个字符串 s，找到 s 中最长的回文子串。',
-    solution: '使用中心扩展法，从每个字符向两边扩展判断回文',
-    answer: '```javascript\nfunction longestPalindrome(s) {\n  if (s.length < 2) return s;\n  let start = 0, maxLen = 1;\n  \n  function expandAroundCenter(left, right) {\n    while (left >= 0 && right < s.length && s[left] === s[right]) {\n      const len = right - left + 1;\n      if (len > maxLen) {\n        maxLen = len;\n        start = left;\n      }\n      left--;\n      right++;\n    }\n  }\n  \n  for (let i = 0; i < s.length; i++) {\n    expandAroundCenter(i, i);\n    expandAroundCenter(i, i + 1);\n  }\n  \n  return s.substring(start, start + maxLen);\n}\n```',
-    createdAt: '2024-01-16'
-  }
-]
 
-// 方法
-const loadProblems = async () => {
-  loading.value = true
-  try {
-    // 模拟API调用
-    await new Promise(resolve => setTimeout(resolve, 500))
-    problems.value = mockProblems.slice(
-      (currentPage.value - 1) * pageSize.value,
-      currentPage.value * pageSize.value
-    )
-    total.value = mockProblems.length
-  } catch (error) {
-    ElMessage.error('加载失败')
-  } finally {
-    loading.value = false
-  }
-}
 
 const handleViewDetails = (problem: Problem) => {
   Object.assign(currentProblem, problem)
@@ -172,54 +198,59 @@ const handleEditProblem = (problem: Problem) => {
   showAddDialog.value = true
 }
 
-const handleDeleteProblem = async (id: number) => {
-  try {
-    await ElMessageBox.confirm('确定要删除这个题目吗？', '提示', {
-      type: 'warning'
-    })
-    // 模拟删除
-    problems.value = problems.value.filter(p => p.id !== id)
+const handleDeleteProblem = async (id: string) => {
+  await ElMessageBox.confirm('确定要删除这个题目吗？', '提示', {
+    type: 'warning'
+  })
+  const res: any = await deleteMethod(id)
+  if (res.code === 200) {
     ElMessage.success('删除成功')
-  } catch {
-    // 用户取消
+    initMethodList()
+  } else {
+    ElMessage.error(res.msg)
+    initMethodList()
   }
 }
 
 const handlePageChange = (page: number) => {
   currentPage.value = page
-  loadProblems()
+  initMethodList()
 }
 
 const handleSizeChange = (size: number) => {
   pageSize.value = size
   currentPage.value = 1 // 重置到第一页
-  loadProblems()
+  initMethodList()
 }
 
 const handleSubmit = async (data: any) => {
   formLoading.value = true
   try {
     if (isEdit.value) {
-      // 模拟更新
-      const index = problems.value.findIndex(p => p.id === data.id)
-      if (index !== -1) {
-        problems.value[index] = { ...data, createdAt: problems.value[index].createdAt }
+      // 更新题目
+      const res: any = await updateMethod(data.id.toString(), data)
+      if (res.code === 200) {
+        ElMessage.success('更新成功')
+        initMethodList()
+      } else {
+        ElMessage.error(res.msg || '更新失败')
       }
-      ElMessage.success('更新成功')
     } else {
-      // 模拟添加
-      const newProblem = {
-        ...data,
-        id: Date.now(),
-        createdAt: new Date().toISOString().split('T')[0]
+      // 新增题目
+      // 移除id字段
+      const { id, ...rest } = data
+      const res: any = await addMethod(rest)
+      if (res.code === 200) {
+        ElMessage.success('添加成功')
+        initMethodList()
+      } else {
+        ElMessage.error(res.msg || '添加失败')
       }
-      problems.value.unshift(newProblem)
-      total.value++
-      ElMessage.success('添加成功')
     }
     showAddDialog.value = false
     resetForm()
   } catch (error) {
+    console.error('操作失败:', error)
     ElMessage.error('操作失败')
   } finally {
     formLoading.value = false
@@ -243,30 +274,48 @@ const handleEditAnswer = () => {
   showAnswerDialog.value = true
 }
 
-const handleUpdateSolution = () => {
+const handleUpdateSolution = async () => {
   formLoading.value = true
-  setTimeout(() => {
-    const index = problems.value.findIndex(p => p.id === currentProblem.id)
-    if (index !== -1) {
-      problems.value[index].solution = currentProblem.solution
+  try {
+    const res: any = await updateMethod(currentProblem.id.toString(), {
+      ...currentProblem,
+      solution: currentProblem.solution
+    })
+    if (res.code === 200) {
+      ElMessage.success('解题思路更新成功')
+      initMethodList()
+    } else {
+      ElMessage.error(res.msg || '更新失败')
     }
+  } catch (error) {
+    console.error('更新解题思路失败:', error)
+    ElMessage.error('更新失败')
+  } finally {
     formLoading.value = false
     showSolutionDialog.value = false
-    ElMessage.success('解题思路更新成功')
-  }, 500)
+  }
 }
 
-const handleUpdateAnswer = () => {
+const handleUpdateAnswer = async () => {
   formLoading.value = true
-  setTimeout(() => {
-    const index = problems.value.findIndex(p => p.id === currentProblem.id)
-    if (index !== -1) {
-      problems.value[index].answer = currentProblem.answer
+  try {
+    const res: any = await updateMethod(currentProblem.id.toString(), {
+      ...currentProblem,
+      answer: currentProblem.answer
+    })
+    if (res.code === 200) {
+      ElMessage.success('答案更新成功')
+      initMethodList()
+    } else {
+      ElMessage.error(res.msg || '更新失败')
     }
+  } catch (error) {
+    console.error('更新答案失败:', error)
+    ElMessage.error('更新失败')
+  } finally {
     formLoading.value = false
     showAnswerDialog.value = false
-    ElMessage.success('答案更新成功')
-  }, 500)
+  }
 }
 
 const resetForm = () => {
@@ -283,6 +332,15 @@ const resetForm = () => {
   isEdit.value = false
 }
 
+// 重置筛选条件
+const resetFilters = () => {
+  searchTitle.value = ''
+  searchDifficulty.value = ''
+  searchCategory.value = ''
+  currentPage.value = 1
+  initMethodList()
+}
+
 // 监听对话框关闭
 watch(() => showAddDialog.value, (val) => {
   if (!val) {
@@ -290,87 +348,145 @@ watch(() => showAddDialog.value, (val) => {
   }
 })
 
+// 监听筛选条件变化，自动重新加载数据
+watch([searchTitle, searchDifficulty, searchCategory], () => {
+  currentPage.value = 1 // 重置到第一页
+  initMethodList()
+})
+// 初始化方法列表
+const initMethodList = async () => {
+  loading.value = true
+  try {
+    const query: any = {
+      page: currentPage.value.toString(),
+      limit: pageSize.value.toString()
+    }
+    
+    // 添加筛选参数
+    if (searchTitle.value) query.title = searchTitle.value
+    if (searchDifficulty.value) query.difficulty = searchDifficulty.value
+    if (searchCategory.value) query.category = searchCategory.value
+    
+    const res: any = await getMethodList(query)
+    if (res.code === 200) {
+      // 使用后端返回的分页数据结构
+      problems.value = res.data.list || res.data
+      total.value = res.data.total || res.data.length || 0
+    }
+  } catch (error) {
+    console.error('获取算法题列表失败:', error)
+    ElMessage.error('获取算法题列表失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+
 onMounted(() => {
-  loadProblems()
+  // loadProblems()
+  initMethodList()
 })
 </script>
 
 <style lang="scss" scoped>
 .method-container {
   .page-header {
-  margin-bottom: 24px;
-  padding: 24px 0;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-}
+    margin-bottom: 10px;
+    padding: 24px 0;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  }
 
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 24px;
-}
+  .header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 24px;
+  }
 
-.header-info h2 {
-  margin: 0 0 8px 0;
-  font-size: 20px;
-  font-weight: 500;
-  color: #303133;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+  .header-info h2 {
+    margin: 0 0 8px 0;
+    font-size: 20px;
+    font-weight: 500;
+    color: #303133;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
 
-.header-info h2 .el-icon {
-  font-size: 24px;
-  color: #409eff;
-}
+  .header-info h2 .el-icon {
+    font-size: 24px;
+    color: #409eff;
+  }
 
-.subtitle {
-  margin: 0;
-  color: #909399;
-  font-size: 14px;
-}
+  .subtitle {
+    margin: 0;
+    color: #909399;
+    font-size: 14px;
+  }
 
-.header-stats {
-  display: flex;
-  gap: 32px;
-}
+  .header-stats {
+    display: flex;
+    gap: 32px;
+  }
 
-.stat-item {
-  text-align: center;
-}
+  .stat-item {
+    text-align: center;
+  }
 
-.stat-number {
-  font-size: 24px;
-  font-weight: 600;
-  color: #303133;
-  margin-bottom: 4px;
-}
+  .stat-number {
+    font-size: 24px;
+    font-weight: 600;
+    color: #303133;
+    margin-bottom: 4px;
+  }
 
-.stat-number.success {
-  color: #67c23a;
-}
+  .stat-number.success {
+    color: #67c23a;
+  }
 
-.stat-number.warning {
-  color: #e6a23c;
-}
+  .stat-number.warning {
+    color: #e6a23c;
+  }
 
-.stat-number.danger {
-  color: #f56c6c;
-}
+  .stat-number.danger {
+    color: #f56c6c;
+  }
 
-.stat-label {
-  font-size: 12px;
-  color: #909399;
-}
+  .stat-label {
+    font-size: 12px;
+    color: #909399;
+  }
 
   .content-area {
     background: #fff;
     border-radius: 8px;
     padding: 20px;
     box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  }
+
+  .search-filter-section {
+    margin-bottom: 20px;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+  }
+
+  .search-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .search-input {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .filter-select {
+    width: 150px;
   }
 
   .dialog-actions {
@@ -381,12 +497,13 @@ onMounted(() => {
   }
 }
 
-:deep(.el-overlay-dialog){
-   display: flex;
-   justify-content: center;
-   align-items: center;
+:deep(.el-overlay-dialog) {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 
 }
+
 :deep(.el-dialog) {
   margin: 0;
 }
@@ -396,36 +513,47 @@ onMounted(() => {
   .method-container {
     padding: 16px;
   }
-  
+
   .page-header {
     margin-bottom: 16px;
     padding: 16px 0;
   }
-  
+
   .header-content {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
     padding: 0 16px;
   }
-  
+
   .header-info h2 {
     font-size: 18px;
   }
-  
+
   .header-stats {
     gap: 16px;
     width: 100%;
     justify-content: space-around;
   }
-  
+
   .stat-item {
     flex: 1;
     min-width: 60px;
   }
-  
+
   .stat-number {
     font-size: 20px;
+  }
+
+  .search-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-input,
+  .filter-select {
+    width: 100%;
+    min-width: unset;
   }
 }
 </style>

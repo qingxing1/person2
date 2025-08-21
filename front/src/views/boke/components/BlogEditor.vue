@@ -8,20 +8,18 @@
         <div class="flex justify-between w-full">
           <el-form-item label="分类" prop="category">
             <el-select v-model="form.category" placeholder="请选择分类" style="width:450px">
-              <el-option label="技术" value="tech" />
-              <el-option label="生活" value="life" />
-              <el-option label="工作" value="work" />
-              <el-option label="其他" value="other" />
+              <div v-for="category in availableCategories" :key="category">
+                <el-option :label="category" :value="category" />
+              </div>
             </el-select>
           </el-form-item>
 
           <el-form-item label="标签" prop="tags">
-            <el-input
-              v-model="form.tags"
-              placeholder="请输入标签，用逗号分隔"
-              style="width: 450px"
-              @input="handleTagsInput"
-            />
+            <el-select v-model="form.tags" placeholder="请选择标签" style="width:450px" multiple>
+              <div v-for="tag in availableTags" :key="tag">
+                <el-option :label=tag :value=tag />
+              </div>
+            </el-select>
           </el-form-item>
         </div>
 
@@ -33,23 +31,17 @@
         </el-form-item>
 
         <el-form-item label="封面图片" prop="cover">
-          <el-upload
-            class="cover-upload"
-            action="/api/upload/image"
-            :show-file-list="false"
-            :on-success="handleCoverSuccess"
-            :before-upload="beforeCoverUpload"
-            :headers="uploadHeaders"
-            accept="image/*"
-          >
-            <img v-if="form.cover" :src="form.cover" class="cover-image" alt="封面" />
+          <el-upload class="cover-upload" action="#" :http-request="handleCoverUpload" :show-file-list="false"
+            :before-upload="beforeCoverUpload" :headers="uploadHeaders" accept="image/*">
+            <img v-if="form.coverImage" :src="form.coverImage" class="cover-image" alt="封面" />
             <div v-else class="cover-placeholder">
-              <el-icon><Picture /></el-icon>
+              <el-icon>
+                <Picture />
+              </el-icon>
               <span>点击上传封面</span>
             </div>
           </el-upload>
           <div class="cover-tip">建议尺寸：800x400px，大小不超过2MB</div>
-
         </el-form-item>
 
         <el-form-item label="内容" prop="content">
@@ -57,47 +49,42 @@
             <div class="editor-toolbar">
               <el-button-group>
                 <el-button size="small" @click="insertBold" title="粗体">
-                  <el-icon><Bold /></el-icon>
+                  <el-icon>
+                    <Bold />
+                  </el-icon>
                 </el-button>
                 <el-button size="small" @click="insertItalic" title="斜体">
-                  <el-icon><Italic /></el-icon>
+                  <el-icon>
+                    <Italic />
+                  </el-icon>
                 </el-button>
                 <el-button size="small" @click="insertLink" title="链接">
-                  <el-icon><Link /></el-icon>
+                  <el-icon>
+                    <Link />
+                  </el-icon>
                 </el-button>
                 <el-button size="small" @click="insertCode" title="代码块">
                   <el-icon><Code /></el-icon>
                 </el-button>
                 <el-button size="small" @click="insertTable" title="表格">
-                  <el-icon><Grid /></el-icon>
+                  <el-icon>
+                    <Grid />
+                  </el-icon>
                 </el-button>
-                <el-upload
-                  ref="uploadRef"
-                  class="image-upload"
-                  action="/api/upload/image"
-                  :show-file-list="false"
-                  :on-success="handleImageSuccess"
-                  :before-upload="beforeImageUpload"
-                  :headers="uploadHeaders"
-                  accept="image/*"
-                >
+                <el-upload ref="uploadRef" class="image-upload" action="#" :http-request="handleContentImageUpload"
+                  :show-file-list="false" :before-upload="beforeImageUpload" accept="image/*">
                   <el-button size="small" type="primary" title="上传图片">
-                    <el-icon><Picture /></el-icon>
+                    <el-icon>
+                      <Picture />
+                    </el-icon>
                   </el-button>
                 </el-upload>
               </el-button-group>
             </div>
-            
+
             <div class="markdown-editor">
-              <textarea
-                ref="editorRef"
-                v-model="form.content"
-                placeholder="请输入博客内容，支持Markdown格式
-支持拖拽或粘贴上传图片..."
-                @dragover.prevent
-                @drop="handleDrop"
-                @paste="handlePaste"
-              ></textarea>
+              <textarea ref="editorRef" v-model="form.content" placeholder="请输入博客内容，支持Markdown格式
+支持拖拽或粘贴上传图片..." @dragover.prevent @drop="handleDrop" @paste="handlePaste"></textarea>
               <div class="editor-info">
                 <span class="char-count">{{ form.content.length }} 字符</span>
                 <span class="upload-hint">拖拽或粘贴图片可直接上传</span>
@@ -122,7 +109,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
 import { marked } from 'marked'
 import type { UploadProps } from 'element-plus'
@@ -134,24 +121,43 @@ import {
   Grid as Grid,
   Picture as Picture
 } from '@element-plus/icons-vue'
-
+import type { FormRules } from 'element-plus'
 import type { Blog, BlogFormData } from '../types/blog'
+import { addBlog, updateBlog, uploadCoverImage, uploadContentImage, getBlogDetail } from '@/api/boke'
+import emitter from '@/utils/mitt';
 
-type EditorBlog = Omit<BlogFormData, 'tags'> & { 
-  id?: number
-  tags: string | string[] 
+
+type EditorBlog = Omit<BlogFormData, 'tags'> & {
+  id?: string,
+  tags: string,
+  coverImage: string,
+  author: string
 }
 
 const props = defineProps<{
   visible: boolean
   blog?: Blog
   isEdit?: boolean
+  currentBlogId?: string
+
 }>()
 
 const emit = defineEmits<{
   close: []
-  submit: [data: EditorBlog]
+  submit: [data: Omit<EditorBlog, 'tags'> & { tags: string[] }]
 }>()
+
+// 标签选项
+const availableTags = ref([
+  'React', 'TypeScript', 'JavaScript', 'CSS', 'Node.js',
+  '性能优化', 'Webpack', 'Vite', '测试', '状态管理'
+])
+
+// 分类选项
+const availableCategories = ref([
+  '前端', '后端', '全栈', '移动开发', '数据库',
+  '运维', '安全', '项目管理', '其他'
+])
 
 const formRef = ref()
 const submitting = ref(false)
@@ -159,20 +165,20 @@ const editorRef = ref<HTMLTextAreaElement>()
 const uploadRef = ref()
 
 const form = ref<EditorBlog>({
+  id: '',
   title: '',
   tags: '',
   category: '',
   status: 'draft',
   content: '',
-  cover: ''
+  coverImage: '',
+  author: 'admin'
 })
 
 // 上传配置
 const uploadHeaders = ref({
   'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
 })
-
-import type { FormRules } from 'element-plus'
 
 const rules: FormRules = {
   title: [
@@ -194,18 +200,22 @@ const renderedContent = computed(() => {
   return marked(form.value.content || '')
 })
 
-// 处理标签输入
-const handleTagsInput = (value: string) => {
-  form.value.tags = value
+// 转换标签字符串为数组
+const getTagsArray = (temp: string) => {
+  return temp
+    .split(',')
+    .map(tag => tag.trim()) // 去除前后空格
+    .filter(tag => tag); // 过滤空字符串
+
+}
+// 将数组标签转化为字符串
+const getTagsString = (temp: Array<string>) => {
+  return temp
+    .map(tag => tag.trim()) // 去除元素前后空格
+    .filter(tag => tag) // 过滤空字符串
+    .join(',');
 }
 
-// 转换标签字符串为数组
-const getTagsArray = () => {
-  return form.value.tags
-    .split(',')
-    .map(tag => tag.trim())
-    .filter(tag => tag.length > 0)
-}
 
 // 插入Markdown语法
 const insertAtCursor = (text: string) => {
@@ -215,7 +225,7 @@ const insertAtCursor = (text: string) => {
   const start = textarea.selectionStart
   const end = textarea.selectionEnd
   const selectedText = form.value.content.substring(start, end)
-  
+
   let newText = ''
   let newCursorPos = start
 
@@ -275,14 +285,74 @@ const beforeImageUpload: UploadProps['beforeUpload'] = (file) => {
   return true
 }
 
-const handleImageSuccess: UploadProps['onSuccess'] = (response) => {
-  if (response.code === 200 && response.data?.url) {
-    const imageUrl = response.data.url
-    const imageMarkdown = `![图片描述](${imageUrl})`
-    insertAtCursor(imageMarkdown)
-    ElMessage.success('图片上传成功！')
-  } else {
-    ElMessage.error(response.message || '图片上传失败！')
+// 使用新的内容图片上传方法
+const handleContentImageUpload = async (options: any) => {
+  const { file } = options
+
+  try {
+    const res: any = await uploadContentImage(file)
+
+    if (res.code === 200 && res.data) {
+      const imageUrl = res.data
+      const imageMarkdown = `![图片描述](${imageUrl})`
+      insertAtCursor(imageMarkdown)
+      ElMessage.success('图片上传成功！')
+    } else {
+      ElMessage.error(res.message || '图片上传失败！')
+    }
+  } catch (error) {
+    ElMessage.error('图片上传失败！')
+  }
+}
+
+// 更新拖拽上传
+const handleDrop = (event: DragEvent) => {
+  event.preventDefault()
+  const files = event.dataTransfer?.files
+  if (files && files.length > 0) {
+    const file = files[0]
+    if (file.type.startsWith('image/')) {
+      uploadContentImage(file).then((res: any) => {
+
+        if (res.code === 200 && res.data) {
+          const imageUrl = res.data
+          const imageMarkdown = `![图片描述](${imageUrl})`
+          insertAtCursor(imageMarkdown)
+          ElMessage.success('图片上传成功！')
+        } else {
+          ElMessage.error(res.message || '图片上传失败！')
+        }
+      }).catch(() => {
+        ElMessage.error('图片上传失败！')
+      })
+    }
+  }
+}
+
+// 更新粘贴上传
+const handlePaste = (event: ClipboardEvent) => {
+  const items = event.clipboardData?.items
+  if (items) {
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.startsWith('image/')) {
+        const file = items[i].getAsFile()
+        if (file) {
+          uploadContentImage(file).then((res: any) => {
+
+            if (res.code === 200 && res.data) {
+              const imageUrl = res.data
+              const imageMarkdown = `![图片描述](${imageUrl})`
+              insertAtCursor(imageMarkdown)
+              ElMessage.success('图片上传成功！')
+            } else {
+              ElMessage.error(res.message || '图片上传失败！')
+            }
+          }).catch(() => {
+            ElMessage.error('图片上传失败！')
+          })
+        }
+      }
+    }
   }
 }
 
@@ -302,81 +372,35 @@ const beforeCoverUpload: UploadProps['beforeUpload'] = (file) => {
   return true
 }
 
-const handleCoverSuccess: UploadProps['onSuccess'] = (response) => {
-  if (response.code === 200 && response.data?.url) {
-    form.value.cover = response.data.url
-    ElMessage.success('封面上传成功！')
-  } else {
-    ElMessage.error(response.message || '封面上传失败！')
+// 使用自定义封面上传方法
+const handleCoverUpload = async (options: any) => {
+  const { file } = options
+
+  try {
+    const res: any = await uploadCoverImage(file)
+    if (res.code === 200 && res.data) {
+      form.value.coverImage = res.data
+      ElMessage.success('封面上传成功！')
+    } else {
+      ElMessage.error(res.message || '封面上传失败！')
+    }
+  } catch (error) {
+    ElMessage.error('封面上传失败！')
   }
 }
 
-// 拖拽上传
-const handleDrop = (event: DragEvent) => {
-  event.preventDefault()
-  const files = event.dataTransfer?.files
-  if (files && files.length > 0) {
-    const file = files[0]
-    if (file.type.startsWith('image/')) {
-      uploadImage(file)
-    }
-  }
-}
-
-// 粘贴上传
-const handlePaste = (event: ClipboardEvent) => {
-  const items = event.clipboardData?.items
-  if (items) {
-    for (let i = 0; i < items.length; i++) {
-      if (items[i].type.startsWith('image/')) {
-        const file = items[i].getAsFile()
-        if (file) {
-          uploadImage(file)
-        }
-      }
-    }
-  }
-}
-
-// 手动上传图片
-const uploadImage = (file: File) => {
-  const formData = new FormData()
-  formData.append('file', file)
-
-  // 这里可以替换为你的实际上传接口
-  fetch('/api/upload/image', {
-    method: 'POST',
-    body: formData,
-    headers: {
-      'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
-    }
-  })
-    .then(res => res.json())
-    .then(response => {
-      if (response.code === 200 && response.data?.url) {
-        const imageUrl = response.data.url
-        const imageMarkdown = `![图片描述](${imageUrl})`
-        insertAtCursor(imageMarkdown)
-        ElMessage.success('图片上传成功！')
-      } else {
-        ElMessage.error(response.message || '图片上传失败！')
-      }
-    })
-    .catch(() => {
-      ElMessage.error('图片上传失败！')
-    })
-}
 
 watch(() => props.blog, (newBlog) => {
   if (newBlog && props.isEdit) {
     form.value = {
-      id: newBlog.id,
+      id: newBlog.id?.toString(),
       title: newBlog.title || '',
-      tags: Array.isArray(newBlog.tags) ? newBlog.tags.join(', ') : (newBlog.tags || ''),
+      tags: getTagsArray(newBlog.tags),
       category: newBlog.category || '',
       status: newBlog.status || 'draft',
       content: newBlog.content || '',
-      cover: newBlog.cover || ''
+      coverImage: newBlog.coverImage || '',
+      author: newBlog.author || 'admin',
     }
   } else {
     form.value = {
@@ -385,33 +409,46 @@ watch(() => props.blog, (newBlog) => {
       category: '',
       status: 'draft',
       content: '',
-      cover: ''
+      coverImage: '',
+      author: 'admin'
     }
   }
 }, { immediate: true })
 
+// 关闭弹窗
 const handleClose = () => {
   formRef.value?.resetFields()
   emit('close')
 }
 
+// 提交博客表单
 const handleSubmit = async () => {
-  try {
-    await formRef.value?.validate()
-    submitting.value = true
-    
-    // 创建提交数据，将标签字符串转换为数组
-    const submitData = {
-      ...form.value,
-      tags: getTagsArray()
+  // 在提交之前将标签的数组转化为字符串
+  form.value.tags = getTagsString(form.value.tags)
+
+  // 判断是新增还是编辑
+  if (form.value.id) {
+    // 编辑
+    const res: any = await updateBlog(form.value)
+    if (res.code === 200) {
+      ElMessage.success('编辑成功')
+      handleClose()
     }
-    
-    emit('submit', submitData)
-  } catch (error) {
-    console.error('表单验证失败:', error)
-  } finally {
-    submitting.value = false
+
+  } else {
+    // 新增
+    // 移除id
+    const { id, ...data } = form.value;  // 直接排除 id 字段
+    // 新增
+    const res: any = await addBlog(data)
+    if (res.code === 200) {
+      ElMessage.success('新增成功')
+      handleClose()
+    }
   }
+  // 传递消息，通知博客列表重新获取博客列表
+  emitter.emit('refreshBlogList');
+
 }
 
 const setSubmitting = (value: boolean) => {
@@ -421,6 +458,81 @@ const setSubmitting = (value: boolean) => {
 defineExpose({
   setSubmitting
 })
+
+// 根据id获取博客内容详情
+const getBlogDetailById = async (id: string) => {
+  form.value.id = id
+  const res: any = await getBlogDetail(id)
+  if (res.code === 200) {
+    form.value = res.data
+    // 在这里处理tags，将字符串转换为数组
+    form.value.tags = getTagsArray(form.value.tags)
+  }
+  else {
+    ElMessage.error(res.message || '获取博客详情失败！')
+  }
+}
+
+// 监听visible变化，当编辑器显示时加载数据
+watch(() => [props.visible, props.currentBlogId, props.isEdit], ([visible, blogId, isEdit]) => {
+  if (visible) {
+    if (isEdit && blogId) {
+      // 编辑模式：加载博客数据
+      getBlogDetailById(blogId)
+    } else if (!isEdit) {
+      // 新增模式：强制重置表单，无论blogId是否存在
+      form.value = {
+        id: '',
+        title: '',
+        tags: '',
+        category: '',
+        status: 'draft',
+        content: '',
+        coverImage: '',
+        author: 'admin'
+      }
+    }
+  }
+})
+
+// 监听isEdit变化，确保模式切换时正确重置表单
+watch(() => props.isEdit, (newIsEdit) => {
+  if (props.visible) {
+    if (!newIsEdit) {
+      // 切换到新增模式：强制重置表单
+      form.value = {
+        id: '',
+        title: '',
+        tags: '',
+        category: '',
+        status: 'draft',
+        content: '',
+        coverImage: '',
+        author: 'admin'
+      }
+    }
+  }
+})
+
+// 确保组件挂载后立即检查当前状态
+onMounted(() => {
+  if (props.visible && props.isEdit && props.currentBlogId) {
+    getBlogDetailById(props.currentBlogId)
+  } else if (props.visible && !props.isEdit) {
+    // 新增模式：重置表单
+    form.value = {
+      id: '',
+      title: '',
+      tags: '',
+      category: '',
+      status: 'draft',
+      content: '',
+      coverImage: '',
+      author: 'admin'
+    }
+  }
+})
+
 </script>
 
 <style scoped lang="scss">
@@ -511,12 +623,34 @@ defineExpose({
             line-height: 1.25;
           }
 
-          :deep(h1) { font-size: 2em; border-bottom: 1px solid #eaecef; padding-bottom: 0.3em; }
-          :deep(h2) { font-size: 1.5em; border-bottom: 1px solid #eaecef; padding-bottom: 0.3em; }
-          :deep(h3) { font-size: 1.25em; }
-          :deep(h4) { font-size: 1em; }
-          :deep(h5) { font-size: 0.875em; }
-          :deep(h6) { font-size: 0.85em; color: #6a737d; }
+          :deep(h1) {
+            font-size: 2em;
+            border-bottom: 1px solid #eaecef;
+            padding-bottom: 0.3em;
+          }
+
+          :deep(h2) {
+            font-size: 1.5em;
+            border-bottom: 1px solid #eaecef;
+            padding-bottom: 0.3em;
+          }
+
+          :deep(h3) {
+            font-size: 1.25em;
+          }
+
+          :deep(h4) {
+            font-size: 1em;
+          }
+
+          :deep(h5) {
+            font-size: 0.875em;
+          }
+
+          :deep(h6) {
+            font-size: 0.85em;
+            color: #6a737d;
+          }
 
           :deep(p) {
             margin: 0 0 16px 0;
@@ -539,7 +673,7 @@ defineExpose({
             overflow-x: auto;
             font-size: 14px;
             line-height: 1.45;
-            
+
             code {
               background-color: transparent;
               padding: 0;
@@ -603,18 +737,18 @@ defineExpose({
   position: relative;
   overflow: hidden;
   transition: var(--el-transition-duration-fast);
-  
+
   &:hover {
     border-color: var(--el-color-primary);
   }
-  
+
   .cover-image {
     width: 200px;
     height: 100px;
     object-fit: cover;
     display: block;
   }
-  
+
   .cover-placeholder {
     display: flex;
     flex-direction: column;
@@ -624,7 +758,7 @@ defineExpose({
     height: 100px;
     color: #8c939d;
     font-size: 14px;
-    
+
     .el-icon {
       font-size: 28px;
       margin-bottom: 8px;
@@ -663,8 +797,9 @@ defineExpose({
         }
       }
     }
-    
+
     .cover-upload {
+
       .cover-image,
       .cover-placeholder {
         width: 100%;

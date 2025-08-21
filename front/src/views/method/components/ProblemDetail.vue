@@ -61,12 +61,12 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
 import { Edit } from '@element-plus/icons-vue'
-
+import type { Category } from '@/api/method'
 interface Problem {
   id: number
   title: string
   difficulty: '简单' | '中等' | '困难'
-  category: string
+  category: Category
   description?: string
   solution?: string
   answer?: string

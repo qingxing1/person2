@@ -49,13 +49,23 @@ export class BlogController {
   @ApiQuery({ name: 'title', required: false, description: '博客标题(模糊查询)' })
   @ApiQuery({ name: 'category', required: false, description: '博客分类' })
   @ApiQuery({ name: 'status', required: false, description: '博客状态', enum: ['draft', 'published'] })
+  @ApiQuery({ name: 'page', required: false, description: '页码', type: Number })
+  @ApiQuery({ name: 'size', required: false, description: '每页数量', type: Number })
   @ApiResult(BlogEntity, true)
   async findAll(
     @Query('title') title?: string,
     @Query('category') category?: string,
-    @Query('status') status?: string
+    @Query('status') status?: string,
+    @Query('page') page?: number,
+    @Query('size') size?: number
   ): Promise<ResultData> {
-    return this.blogService.findAll({ title, category, status });
+    return this.blogService.findAll({ 
+      title, 
+      category, 
+      status, 
+      page: page || 1, 
+      size: size || 10 
+    });
   }
 
   @Get(':id')
