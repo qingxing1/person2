@@ -41,11 +41,11 @@ const emit = defineEmits<{
   margin-top: 15px;
   background: #fff;
   border-radius: 8px;
-  padding: 24px;
+  padding: 20px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
 
   .card-header {
-    margin-bottom: 20px;
+    margin-bottom: 12px;
 
     h3 {
       margin: 0;
@@ -62,7 +62,6 @@ const emit = defineEmits<{
 
     .action-item {
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
       padding: 20px;
@@ -79,7 +78,7 @@ const emit = defineEmits<{
 
       .el-icon {
         font-size: 24px;
-        margin-bottom: 8px;
+        margin-right: 5px;
       }
 
       span {

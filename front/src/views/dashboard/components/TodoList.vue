@@ -37,7 +37,7 @@ interface TodoItem {
   id: number
   title: string
   completed: boolean
-  priority: string
+  priority: '高' | '中' | '低'
 }
 
 interface Props {
@@ -64,11 +64,12 @@ const getPriorityType = (priority: string) => {
 <style lang="scss" scoped>
 .todo-card {
   background: #fff;
-  border-radius: 8px;
+  border-radius:0 0 8px 8px;
   padding: 24px;
   padding-right: 0;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-  max-height: 440px;
+  border-top: 1px solid #c7c6c6;
+  // box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  max-height: 310px;
 
   .card-header {
     display: flex;
@@ -87,7 +88,7 @@ const getPriorityType = (priority: string) => {
 
   .todo-list {
     padding-right: 14px;
-    max-height: 360px;
+    max-height: 230px;
     overflow-y: auto;
 
     .todo-item {
@@ -101,9 +102,14 @@ const getPriorityType = (priority: string) => {
         border-bottom: none;
       }
 
+      &.todo-completed {
+        opacity: 0.7;
+      }
+
       .completed {
         text-decoration: line-through;
-        color: #909399;
+        color: #67C23A;
+        background-color: #e9e9e9;
       }
 
       .todo-actions {

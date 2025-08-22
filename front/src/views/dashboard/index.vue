@@ -27,7 +27,7 @@
         <el-col :span="6" :sm="12" :xs="24" :lg="6">
           <StatCard 
             :icon="Clock" 
-            :number="pendingTodos.length" 
+            :number="todoStats.total" 
             label="待办事项" 
           />
         </el-col>
@@ -74,6 +74,9 @@
 
         <!-- 右侧内容 -->
         <el-col :span="8" :xs="24" :sm="24" :lg="8">
+          <!-- 待办统计 -->
+          <TodoStats :stats="todoStats" class="mb-4" />
+          
           <!-- 待办事项 -->
           <TodoList 
             :todos="todos"
@@ -100,16 +103,23 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { View, Document, Edit, Clock, EditPen, CirclePlus, TrendCharts, Setting } from '@element-plus/icons-vue'
 import StatCard from './components/StatCard.vue'
 import TodoList from './components/TodoList.vue'
+import TodoStats from './components/TodoStats.vue'
 import QuickActions from './components/QuickActions.vue'
 import ContentList from './components/ContentList.vue'
 import VisitChart from './components/VisitChart.vue'
 import AddTodoDialog from './components/AddTodoDialog.vue'
 import { ElMessage } from 'element-plus'
+import { getAllRecords, addRecord, markAsCompleted, markAsUncompleted, deleteRecord, getStatistics } from '@/api/todolist'
+// 获取博客和算法列表
+import { getBlogList } from '@/api/boke'
+import { getMethodList } from '@/api/method'
+// 获取网站今日访问量
+import { getTodayVisit,getVisitTrend } from '@/api/visit'
 
 const router = useRouter()
 
@@ -124,82 +134,168 @@ const websiteStats = ref({
 })
 
 // 图表数据
-const visitTimeRange = ref('7d')
-const chartData = ref([820, 932, 901, 934, 1290, 1330, 1320])
-const chartLabels = ref(['周一', '周二', '周三', '周四', '周五', '周六', '周日'])
+const visitTimeRange = ref('week')
+const chartData = ref<number[]>([])
+const chartLabels = ref<string[]>([])
 
 // 待办事项
-const todos = ref([
-  { id: 1, title: '完成个人网站首页优化', completed: false, priority: '高' },
-  { id: 2, title: '写一篇关于Vue3的教程', completed: false, priority: '中' },
-  { id: 3, title: '解决算法题 LeetCode 第200题', completed: true, priority: '低' },
-  { id: 4, title: '更新网站SEO配置', completed: false, priority: '中' }
-])
+const todos = ref<Array<{
+  id: number
+  title: string
+  completed: boolean
+  priority: '高' | '中' | '低'
+}>>([])
 
 const pendingTodos = computed(() => todos.value.filter(todo => !todo.completed))
 
+// 待办事项统计
+const todoStats = ref({
+  total: 0,
+  completed: 0,
+  pending: 0,
+  completionRate: 0
+})
+
+// 加载待办事项
+const loadTodos = async () => {
+  try {
+    const response:any = await getAllRecords()
+    if (response.code === 200) {
+      todos.value = response.data.map((item:any) => ({
+        id: Number(item.id),
+        title: item.title,
+        completed: Boolean(item.completed),
+        priority: item.priority as '高' | '中' | '低'
+      }))
+    }
+  } catch (error) {
+    ElMessage.error('获取待办事项失败')
+  }
+}
+
+// 加载待办事项统计
+const loadTodoStats = async () => {
+  try {
+    const response:any = await getStatistics()
+    if (response.code === 200) {
+      todoStats.value = {
+        total: response.data.total || 0,
+        completed: response.data.completed || 0,
+        pending: response.data.pending || 0,
+        completionRate: response.data.completionRate || 0
+      }
+    }
+  } catch (error) {
+    ElMessage.error('获取待办统计失败')
+  }
+}
+
 // 最新博客
-const recentBlogs = ref([
-  { id: 1, title: 'Vue3组合式API最佳实践', date: '2024-01-15', views: '234 阅读' },
-  { id: 2, title: 'TypeScript在大型项目中的应用', date: '2024-01-14', views: '189 阅读' },
-  { id: 3, title: '前端性能优化实战指南', date: '2024-01-13', views: '456 阅读' },
-  { id: 4, title: '深入理解JavaScript异步编程', date: '2024-01-12', views: '321 阅读' }
-])
+const recentBlogs = ref<Array<{
+  id: string
+  title: string
+  date: string
+  views: string
+}>>([])
 
 // 最新算法题
-const recentProblems = ref([
-  { id: 1, title: '两数之和', difficulty: '简单', date: '2024-01-15' },
-  { id: 2, title: '最长回文子串', difficulty: '中等', date: '2024-01-14' },
-  { id: 3, title: '合并K个升序链表', difficulty: '困难', date: '2024-01-13' },
-  { id: 4, title: '有效的括号', difficulty: '简单', date: '2024-01-12' }
-])
+const recentProblems = ref<Array<{
+  id: string
+  title: string
+  difficulty: string
+  date: string
+}>>([])
 
 // 快捷操作
 const quickActions = ref([
   { key: 'write-blog', label: '写博客', icon: EditPen },
   { key: 'add-problem', label: '添加算法题', icon: CirclePlus },
-  { key: 'analytics', label: '数据分析', icon: TrendCharts },
-  { key: 'settings', label: '网站设置', icon: Setting }
+  { key: 'analytics', label: '收藏管理', icon: TrendCharts },
+  { key: 'settings', label: '信息设置', icon: Setting }
 ])
 
 // 添加待办事项
 const showAddTodo = ref(false)
 
-const addTodo = (data: { title: string; priority: string }) => {
-  todos.value.unshift({
-    id: Date.now(),
-    title: data.title,
-    completed: false,
-    priority: data.priority
-  })
-  ElMessage.success('添加成功')
+const addTodo = async (data: { title: string; priority: string }) => {
+  try {
+    const response:any = await addRecord({
+      title: data.title,
+      completed: false,
+      priority: data.priority as '高' | '中' | '低'
+    })
+    if (response.code === 200) {
+      await loadTodos()
+      await loadTodoStats()
+      ElMessage.success('添加成功')
+    }
+  } catch (error) {
+    ElMessage.error('添加失败')
+  }
 }
 
-const updateTodoStatus = (todo: any, completed: boolean) => {
-  todo.completed = completed
-  ElMessage.success(completed ? '任务已完成！' : '已取消完成')
+const updateTodoStatus = async (todo: any, completed: boolean) => {
+  try {
+    let response:any
+    if (completed) {
+      response = await markAsCompleted(String(todo.id))
+    } else {
+      response = await markAsUncompleted(String(todo.id))
+    }
+    
+    if (response.code === 200) {
+      await loadTodos()
+      await loadTodoStats()
+      ElMessage.success(completed ? '任务已完成！' : '已取消完成')
+    }
+  } catch (error) {
+    ElMessage.error('操作失败')
+  }
 }
 
-const deleteTodo = (id: number) => {
-  const index = todos.value.findIndex(todo => todo.id === id)
-  if (index > -1) {
-    todos.value.splice(index, 1)
-    ElMessage.success('删除成功')
+const deleteTodo = async (id: number) => {
+  try {
+    const response:any = await deleteRecord(String(id))
+    if (response.code === 200) {
+      await loadTodos()
+      await loadTodoStats()
+      ElMessage.success('删除成功')
+    }
+  } catch (error) {
+    ElMessage.error('删除失败')
+  }
+}
+
+// 加载访问趋势数据
+const loadVisitTrend = async () => {
+  try {
+    const response: any = await getVisitTrend(visitTimeRange.value)
+    if (response.code === 200 && response.data?.data) {
+      // 按日期排序
+      const sortedData = response.data.data.sort((a: any, b: any) => 
+        new Date(a.date).getTime() - new Date(b.date).getTime()
+      )
+      
+      // 映射数据到图表格式
+      chartData.value = sortedData.map((item: any) => item.count)
+      chartLabels.value = sortedData.map((item: any) => item.date)
+    }
+  } catch (error) {
+    ElMessage.error('获取访问趋势数据失败')
   }
 }
 
 const handleTimeRangeChange = (value: string) => {
   visitTimeRange.value = value
-  // 这里可以根据时间范围更新图表数据
-  console.log('时间范围变更:', value)
+  loadVisitTrend()
 }
 
 const handleQuickAction = (key: string) => {
   const routes: Record<string, string> = {
-    'write-blog': '/boke/write',
-    'add-problem': '/method/add',
-    'analytics': '/dashboard/analytics',
-    'settings': '/system/website'
+    'write-blog': '/boke/info',
+    'add-problem': '/method/info',
+    'analytics': '/person/collect',
+    'settings': '/person/info'
   }
   
   if (routes[key]) {
@@ -214,6 +310,56 @@ const goToBlogs = () => {
 const goToProblems = () => {
   router.push('/method')
 }
+// 获取博客和算法列表
+const loadBlogsAndProblems = async () => {
+  try {
+    const blogResponse:any = await getBlogList({})
+    const methodResponse:any = await getMethodList()
+    if (blogResponse.code === 200 && methodResponse.code === 200) {
+      websiteStats.value.totalBlogs = blogResponse.data.total
+      websiteStats.value.totalProblems = methodResponse.data.length
+      
+      // 映射博客数据到前端字段
+      recentBlogs.value = blogResponse.data.list.slice(0, 4).map((item: any) => ({
+        id: String(item.id),
+        title: item.title,
+        date: item.createTime?.split(' ')[0] || '',
+        views: `${item.viewCount || 0} 阅读`
+      }))
+      
+      // 映射算法题数据到前端字段
+      recentProblems.value = methodResponse.data.slice(0, 4).map((item: any) => ({
+        id: String(item.id),
+        title: item.title,
+        difficulty: item.difficulty,
+        date: item.createdAt?.split('T')[0] || ''
+      }))
+    }
+  } catch (error) {
+    ElMessage.error('获取博客和算法列表失败')
+  }
+}
+
+// 获取今日的访问量
+const loadTodayVisit = async () => {
+  try {
+    const response:any = await getTodayVisit()
+    if (response.code === 200) {
+      websiteStats.value.todayVisits = response.data.count
+    }
+  } catch (error) {
+    ElMessage.error('获取今日访问量失败')
+  }
+}
+
+// 生命周期钩子
+onMounted(() => {
+  loadTodos()
+  loadTodoStats()
+  loadBlogsAndProblems()
+  loadTodayVisit()
+  loadVisitTrend()
+})
 </script>
 
 <style lang="scss" scoped>

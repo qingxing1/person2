@@ -3,9 +3,9 @@
     <div class="card-header">
       <h3>网站访问量趋势</h3>
       <el-radio-group :model-value="timeRange" size="small" @change="$emit('time-change', $event)">
-        <el-radio-button value="7d">7天</el-radio-button>
-        <el-radio-button value="30d">30天</el-radio-button>
-        <el-radio-button value="90d">90天</el-radio-button>
+        <el-radio-button value="week">7天</el-radio-button>
+        <el-radio-button value="month">30天</el-radio-button>
+        <el-radio-button value="nine">90天</el-radio-button>
       </el-radio-group>
     </div>
     <Charts :options="chartOptions" height="300px" />

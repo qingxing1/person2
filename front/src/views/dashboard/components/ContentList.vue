@@ -110,7 +110,8 @@ const getMetaItems = (item: ContentItem) => {
           font-size: 12px;
           color: #909399;
           display: flex;
-          gap: 12px;
+          justify-content: space-between;
+          align-items: center;
         }
       }
     }
