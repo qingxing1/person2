@@ -31,7 +31,7 @@
           </div>
           <el-input
             v-model="searchKeyword"
-            placeholder="搜索网站名称、网址或备注..."
+            placeholder="搜索网站名称..."
             clearable
             class="modern-search"
             size="large"
@@ -39,11 +39,20 @@
         </div>
         <div class="filter-chips">
           <el-tag
-            v-for="category in categories"
-            :key="category.value"
-            :type="getCategoryType(category.value)"
+            :type="selectedCategory === '' ? 'primary' : ''"
             class="category-chip"
             effect="light"
+            @click="selectedCategory = ''"
+          >
+            全部
+          </el-tag>
+          <el-tag
+            v-for="category in categories"
+            :key="category.value"
+            :type="selectedCategory === category.value ? 'primary' : getCategoryType(category.value)"
+            class="category-chip"
+            effect="light"
+            @click="selectedCategory = category.value"
           >
             {{ category.label }}
           </el-tag>
@@ -125,17 +134,17 @@
       </el-table>
 
       <!-- 分页 -->
-      <div class="pagination-container">
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :page-sizes="[10, 20, 50, 100]"
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="filteredCollects.length"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
-      </div>
+        <div class="pagination-container">
+          <el-pagination
+            v-model:current-page="currentPage"
+            v-model:page-size="pageSize"
+            :page-sizes="[10, 20, 50, 100]"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="totalCount"
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+          />
+        </div>
     </el-card>
 
     <!-- 添加/编辑收藏弹窗 -->
@@ -192,30 +201,34 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Star, Plus, Edit, Delete, Link,Search } from '@element-plus/icons-vue'
+import { getCollectionList, addCollection,updateCollection,deleteCollection,getCategoryList, getCollectionListByCategory } from '@/api/collection'
+
 
 // 定义收藏类型
 interface CollectItem {
   id: number
   name: string
   url: string
-  icon?: string
+  icon: string
   category: string
   description: string
   createTime: string
 }
 
-// 分类选项
-const categories = [
-  { label: '技术', value: '技术' },
-  { label: '学习', value: '学习' },
-  { label: '工具', value: '工具' },
-  { label: '娱乐', value: '娱乐' },
-  { label: '购物', value: '购物' },
-  { label: '其他', value: '其他' }
-]
+interface CollectionListResponse {
+  data: CollectItem[]
+  total: number
+  page: number
+  size: number
+  totalPages: number
+}
+
+// 分类选项 - 从API获取
+const categories = ref<{ label: string; value: string }[]>([])
+const selectedCategory = ref('')
 
 // 数据状态
 const collects = ref<CollectItem[]>([])
@@ -226,6 +239,7 @@ const pageSize = ref(10)
 const showAddDialog = ref(false)
 const editingCollect = ref<CollectItem | null>(null)
 const submitLoading = ref(false)
+const totalCount = ref(0)
 
 // 表单引用
 const collectFormRef = ref()
@@ -261,29 +275,44 @@ const collectRules = {
   ]
 }
 
-// 过滤后的收藏
-const filteredCollects = computed(() => {
-  if (!searchKeyword.value) return collects.value
-  
-  const keyword = searchKeyword.value.toLowerCase()
-  return collects.value.filter(item =>
-    item.name.toLowerCase().includes(keyword) ||
-    item.url.toLowerCase().includes(keyword) ||
-    item.description.toLowerCase().includes(keyword) ||
-    item.category.toLowerCase().includes(keyword)
-  )
-})
+
 
 // 分页处理
 const paginatedCollects = computed(() => {
-  const startIndex = (currentPage.value - 1) * pageSize.value
-  const endIndex = startIndex + pageSize.value
-  return filteredCollects.value.slice(startIndex, endIndex)
+  return collects.value
+})
+
+// 获取分类列表
+async function fetchCategories() {
+  try {
+    const response:any = await getCategoryList()
+
+    if (response.code === 200) {
+      // 假设API返回的是字符串数组
+      const categoryData = response.data as string[]
+      categories.value = categoryData.map(cat => ({
+        label: cat,
+        value: cat
+      }))
+    } else {
+      ElMessage.error(response.msg || '获取分类列表失败')
+    }
+  } catch (error) {
+    console.error('获取分类列表失败:', error)
+    ElMessage.error('获取分类列表失败，请稍后重试')
+  }
+}
+
+// 监听搜索关键词变化
+watch([searchKeyword, selectedCategory], () => {
+  currentPage.value = 1
+  fetchCollects()
 })
 
 // 页面加载时获取数据
 onMounted(() => {
   fetchCollects()
+  fetchCategories()
 })
 
 // 获取分类标签类型
@@ -294,66 +323,53 @@ function getCategoryType(category: string) {
     '工具': 'warning',
     '娱乐': 'danger',
     '购物': 'info',
-    '其他': ''
+    '其他': '',
+    '搜索引擎': 'primary'
   }
   return typeMap[category] || ''
 }
 
 // 获取收藏数据
-function fetchCollects() {
+async function fetchCollects() {
   loading.value = true
-  
-  // 模拟API请求延迟
-  setTimeout(() => {
-    // 从本地存储获取数据
-    const storedData = localStorage.getItem('collects')
-    if (storedData) {
-      collects.value = JSON.parse(storedData)
-    } else {
-      // 生成模拟数据
-      const mockData: CollectItem[] = [
-        {
-          id: 1,
-          name: 'Vue.js',
-          url: 'https://vuejs.org',
-          icon: 'https://vuejs.org/logo.svg',
-          category: '技术',
-          description: '渐进式JavaScript框架',
-          createTime: new Date(Date.now() - 86400000).toISOString().slice(0, 10)
-        },
-        {
-          id: 2,
-          name: 'GitHub',
-          url: 'https://github.com',
-          icon: 'https://github.com/favicon.ico',
-          category: '工具',
-          description: '全球最大的代码托管平台',
-          createTime: new Date(Date.now() - 172800000).toISOString().slice(0, 10)
-        },
-        {
-          id: 3,
-          name: 'MDN Web Docs',
-          url: 'https://developer.mozilla.org',
-          category: '学习',
-          description: 'Web技术文档和学习资源',
-          createTime: new Date(Date.now() - 259200000).toISOString().slice(0, 10)
-        }
-      ]
-      collects.value = mockData
-      saveToLocalStorage()
+  try {
+    const params: any = {
+      page: currentPage.value.toString(),
+      size: pageSize.value.toString()
     }
+    
+    // 添加搜索参数
+    if (searchKeyword.value) {
+      params.name = searchKeyword.value
+    }
+    
+    // 添加分类参数
+    if (selectedCategory.value) {
+      params.category = selectedCategory.value
+    }
+    
+    const response:any = await getCollectionList(params)
+    if (response.code === 200) {
+      const data = response.data as CollectionListResponse
+      collects.value = data.data.map(item => ({
+        ...item,
+        createTime: new Date(item.createTime).toLocaleDateString()
+      }))
+      totalCount.value = data.total
+    } else {
+      ElMessage.error(response.msg || '获取收藏列表失败')
+    }
+  } catch (error) {
+    console.error('获取收藏列表失败:', error)
+    ElMessage.error('获取收藏列表失败，请稍后重试')
+  } finally {
     loading.value = false
-  }, 500)
-}
-
-// 保存到本地存储
-function saveToLocalStorage() {
-  localStorage.setItem('collects', JSON.stringify(collects.value))
+  }
 }
 
 // 处理图片加载错误
 function handleImageError(item: CollectItem) {
-  item.icon = undefined
+  item.icon = ''
 }
 
 // 打开编辑对话框
@@ -370,21 +386,27 @@ function editCollect(item: CollectItem) {
 }
 
 // 删除收藏
-function deleteCollect(id: number) {
-  ElMessageBox.confirm('确定要删除这个收藏吗？', '警告', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(() => {
-    const index = collects.value.findIndex(item => item.id === id)
-    if (index !== -1) {
-      collects.value.splice(index, 1)
-      saveToLocalStorage()
-      ElMessage.success('删除成功')
+async function deleteCollect(id: number) {
+  try {
+    const confirmResult = await ElMessageBox.confirm('确定要删除这个收藏吗？', '警告', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    
+    if (confirmResult) {
+      const response:any = await deleteCollection(id.toString())
+
+      if (response.code === 200) {
+        ElMessage.success('删除成功')
+        fetchCollects()
+      } else {
+        ElMessage.error(response.msg || '删除失败')
+      }
     }
-  }).catch(() => {
-    // 取消删除
-  })
+  } catch (error) {
+    // 用户取消删除
+  }
 }
 
 // 关闭对话框
@@ -402,52 +424,55 @@ function handleCloseDialog() {
 }
 
 // 提交表单
-function submitCollect() {
-  collectFormRef.value?.validate((valid: boolean) => {
-    if (valid) {
-      submitLoading.value = true
-      
-      setTimeout(() => {
-        if (editingCollect.value) {
-          // 编辑模式
-          const index = collects.value.findIndex(item => item.id === editingCollect.value!.id)
-          if (index !== -1) {
-            collects.value[index] = {
-              ...editingCollect.value,
-              ...collectForm.value,
-              createTime: editingCollect.value.createTime
-            }
-            ElMessage.success('更新成功')
-          }
-        } else {
-          // 添加模式
-          const newCollect: CollectItem = {
-            id: Date.now(),
-            ...collectForm.value,
-            createTime: new Date().toISOString().slice(0, 10)
-          }
-          collects.value.unshift(newCollect)
-          ElMessage.success('添加成功')
-        }
-        
-        saveToLocalStorage()
-        handleCloseDialog()
-        submitLoading.value = false
-      }, 500)
+async function submitCollect() {
+  const valid = await collectFormRef.value?.validate()
+  if (!valid) return
+  
+  submitLoading.value = true
+  try {
+    let response:any
+
+    
+    if (editingCollect.value) {
+      // 编辑模式
+      response = await updateCollection({
+        id: editingCollect.value.id.toString(),
+        ...collectForm.value
+      })
+    } else {
+      // 添加模式
+      response = await addCollection(collectForm.value)
     }
-  })
+    
+    if (response.code === 200) {
+      ElMessage.success(editingCollect.value ? '更新成功' : '添加成功')
+      fetchCollects()
+      handleCloseDialog()
+    } else {
+      ElMessage.error(response.msg || '操作失败')
+    }
+  } catch (error) {
+    console.error('操作失败:', error)
+    ElMessage.error('操作失败，请稍后重试')
+  } finally {
+    submitLoading.value = false
+  }
 }
 
 // 分页大小变化
 function handleSizeChange(size: number) {
   pageSize.value = size
   currentPage.value = 1
+  fetchCollects()
 }
 
 // 当前页码变化
 function handleCurrentChange(current: number) {
   currentPage.value = current
+  fetchCollects()
 }
+
+
 </script>
 
 <style scoped>

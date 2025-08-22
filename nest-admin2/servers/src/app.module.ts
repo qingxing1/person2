@@ -22,6 +22,9 @@ import { DeptModule } from './system/dept/dept.module'
 import { PostModule } from './system/post/post.module'
 import { BlogModule } from './system/blog/blog.module'
 import { AlgorithmProblemModule } from './system/method/algorithm-problem.module'
+import { PersonalModule } from './system/personal/personal.module'
+import { CollectionModule } from './system/collection/collection.module'
+import { MessageModule } from './system/message/message.module'
 
 @Module({
   imports: [
@@ -101,7 +104,10 @@ import { AlgorithmProblemModule } from './system/method/algorithm-problem.module
     OssModule,
     // 业务功能模块
     BlogModule,
-    AlgorithmProblemModule
+    AlgorithmProblemModule,
+    PersonalModule,
+    MessageModule,
+    CollectionModule
   ],
   // app module 守卫，两个守卫分别依赖 UserService、PermService, 而 UserService、PermService 没有设置全局模块，
   // 所以这俩 守卫 不能再 main.ts 设置全局守卫

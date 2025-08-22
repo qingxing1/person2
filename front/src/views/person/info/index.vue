@@ -6,7 +6,9 @@
         <div class="header-info">
           <div class="title-wrapper">
             <div class="title-icon">
-              <el-icon><User /></el-icon>
+              <el-icon>
+                <User />
+              </el-icon>
             </div>
             <div class="title-text">
               <h2>个人信息设置</h2>
@@ -19,16 +21,10 @@
 
     <!-- 主要内容区域 -->
     <el-card class="info-card">
-      <el-form
-        ref="infoFormRef"
-        :model="infoForm"
-        :rules="rules"
-        label-width="100px"
-        class="info-form"
-      >
+      <el-form ref="infoFormRef" :model="infoForm" :rules="rules" label-width="100px" class="info-form">
         <!-- 基本信息 -->
         <el-divider content-position="left">基本信息</el-divider>
-        
+
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="用户昵称" prop="nickname">
@@ -54,37 +50,28 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="出生日期" prop="birthday">
-              <el-date-picker
-                v-model="infoForm.birthday"
-                type="date"
-                placeholder="选择出生日期"
-                style="width: 100%"
-                :disabled-date="disabledBirthday"
-              />
+              <el-date-picker v-model="infoForm.birthday" type="date" placeholder="选择出生日期" style="width: 100%"
+                :disabled-date="disabledBirthday" />
             </el-form-item>
           </el-col>
         </el-row>
 
         <el-form-item label="个人简介" prop="bio">
-          <el-input
-            v-model="infoForm.bio"
-            type="textarea"
-            :rows="3"
-            placeholder="简短介绍自己，最多200字"
-            maxlength="200"
-            show-word-limit
-          />
+          <el-input v-model="infoForm.bio" type="textarea" :rows="3" placeholder="简短介绍自己，最多200字" maxlength="200"
+            show-word-limit />
         </el-form-item>
 
         <!-- 联系方式 -->
         <el-divider content-position="left">联系方式</el-divider>
-        
+
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="邮箱地址" prop="email">
               <el-input v-model="infoForm.email" placeholder="请输入邮箱地址">
                 <template #prefix>
-                  <el-icon><Message /></el-icon>
+                  <el-icon>
+                    <Message />
+                  </el-icon>
                 </template>
               </el-input>
             </el-form-item>
@@ -93,7 +80,9 @@
             <el-form-item label="手机号码" prop="phone">
               <el-input v-model="infoForm.phone" placeholder="请输入手机号码">
                 <template #prefix>
-                  <el-icon><Phone /></el-icon>
+                  <el-icon>
+                    <Phone />
+                  </el-icon>
                 </template>
               </el-input>
             </el-form-item>
@@ -115,14 +104,14 @@
 
         <!-- 地理位置 -->
         <el-divider content-position="left">地理位置</el-divider>
-        
+
         <el-row :gutter="20">
-          <el-col :span="8">
+          <el-col :span="12">
             <el-form-item label="所在地区" prop="location">
-              <RegionSelector v-model="infoForm.location" />
+              <el-input v-model="infoForm.location" placeholder="请输入所在地区，如：北京市朝阳区" />
             </el-form-item>
           </el-col>
-          <el-col :span="16">
+          <el-col :span="12">
             <el-form-item label="详细地址" prop="address">
               <el-input v-model="infoForm.address" placeholder="请输入详细街道地址" />
             </el-form-item>
@@ -131,36 +120,23 @@
 
         <!-- 专业技能 -->
         <el-divider content-position="left">专业技能</el-divider>
-        
+
         <el-form-item label="技术栈" prop="skills">
-          <TagSelector
-            v-model="infoForm.skills"
-            :available-tags="skillOptions"
-            placeholder="请输入或选择您的技术栈"
-          />
+          <TagSelector v-model="infoForm.skills" :available-tags="skillOptions" placeholder="请输入或选择您的技术栈" />
         </el-form-item>
 
-        <!-- 工作经历 -->
-        <el-divider content-position="left">工作经历</el-divider>
-        
-        <el-form-item label="工作经历" prop="workExperiences">
-          <WorkExperience v-model="infoForm.workExperiences" />
-        </el-form-item>
+
 
         <!-- 兴趣爱好 -->
         <el-divider content-position="left">兴趣爱好</el-divider>
-        
+
         <el-form-item label="兴趣标签" prop="hobbies">
-          <TagSelector
-            v-model="infoForm.hobbies"
-            :available-tags="hobbyOptions"
-            placeholder="请输入或选择您的兴趣爱好"
-          />
+          <TagSelector v-model="infoForm.hobbies" :available-tags="hobbyOptions" placeholder="请输入或选择您的兴趣爱好" />
         </el-form-item>
 
         <!-- 社交媒体 -->
         <el-divider content-position="left">社交媒体</el-divider>
-        
+
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="GitHub" prop="github">
@@ -180,7 +156,7 @@
 
         <!-- 扩展信息 -->
         <el-divider content-position="left">扩展信息</el-divider>
-        
+
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="教育背景" prop="education">
@@ -203,12 +179,10 @@
         <!-- 提交按钮 -->
         <el-form-item>
           <el-button type="primary" @click="submitForm" :loading="loading">
-            <el-icon><Check /></el-icon>
+            <el-icon>
+              <Check />
+            </el-icon>
             保存修改
-          </el-button>
-          <el-button @click="resetForm">
-            <el-icon><Refresh /></el-icon>
-            重置
           </el-button>
         </el-form-item>
       </el-form>
@@ -216,22 +190,22 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
   User,
   Message,
   Phone,
   Check,
-  Refresh
 } from '@element-plus/icons-vue'
 import type { FormInstance, FormRules } from 'element-plus'
 
 // 引入组件
-import AvatarUpload from './components/AvatarUpload.vue'
-import WorkExperience from './components/WorkExperience.vue'
 import TagSelector from './components/TagSelector.vue'
-import RegionSelector from './components/RegionSelector.vue'
+import { getPersonInfo, updatePersonInfo } from '@/api/person'
+import type { UserInfo } from '@/api/person'
+
+
 
 // 表单实例
 const infoFormRef = ref<FormInstance>()
@@ -249,13 +223,11 @@ const infoForm = reactive({
   phone: '',
   qq: '',
   wechat: '',
-  location: [],
+  location: '',
   address: '',
   skills: [] as string[],
   experience: 0,
-  workExperiences: [
-    { company: '', position: '' }
-  ],
+
   hobbies: [] as string[],
   github: '',
   website: '',
@@ -263,6 +235,51 @@ const infoForm = reactive({
   school: '',
   expectedSalary: 15
 })
+
+// 页面加载时获取个人信息
+onMounted(() => {
+  fetchPersonInfo()
+})
+
+// 获取个人信息
+const fetchPersonInfo = async () => {
+  try {
+    loading.value = true
+    const response:any = await getPersonInfo()
+
+    if (response.code === 200 && response.data && response.data.length > 0) {
+      const userData = response.data[0] // 获取第一个用户数据
+
+      // 填充表单数据
+      infoForm.nickname = userData.nickname || ''
+      infoForm.realName = userData.realName || ''
+      infoForm.gender = userData.gender || ''
+      infoForm.birthday = userData.birthday || ''
+      infoForm.bio = userData.bio || ''
+      infoForm.email = userData.email || ''
+      infoForm.phone = userData.phone || ''
+      infoForm.qq = userData.qq || ''
+      infoForm.wechat = userData.wechat || ''
+      // 处理地区数据 - 直接作为字符串使用
+      infoForm.location = userData.location || ''
+      infoForm.address = userData.address || ''
+      infoForm.skills = userData.skills ? userData.skills.split(',').filter((skill: any) => skill.trim()) : []
+      infoForm.hobbies = userData.hobbies ? userData.hobbies.split(',').filter((hobby: any) => hobby.trim()) : []
+      infoForm.github = userData.github || ''
+      infoForm.website = userData.website ? userData.website.replace('https://', '') : ''
+      infoForm.education = userData.education || ''
+      infoForm.school = userData.school || ''
+      ElMessage.success('个人信息加载成功')
+    } else {
+      ElMessage.warning('暂无个人信息，请填写表单')
+    }
+  } catch (error) {
+    console.error('获取个人信息失败:', error)
+    ElMessage.error('获取个人信息失败，请稍后重试')
+  } finally {
+    loading.value = false
+  }
+}
 
 // 验证规则
 const rules: FormRules = {
@@ -306,24 +323,6 @@ const hobbyOptions = [
   '登山', '滑雪', '骑行', '露营', '钓鱼', '园艺'
 ]
 
-// 标记数据
-const experienceMarks = {
-  0: '应届生',
-  3: '3年',
-  5: '5年',
-  10: '10年',
-  15: '15年',
-  20: '20年+'
-}
-
-const salaryMarks = {
-  5: '5k',
-  15: '15k',
-  30: '30k',
-  50: '50k',
-  80: '80k',
-  100: '100k+'
-}
 
 // 禁用未来日期
 const disabledBirthday = (time: Date): boolean => {
@@ -333,27 +332,50 @@ const disabledBirthday = (time: Date): boolean => {
 // 提交表单
 const submitForm = async (): Promise<void> => {
   if (!infoFormRef.value) return
-  
-  await infoFormRef.value.validate((valid) => {
+
+  await infoFormRef.value.validate(async (valid) => {
     if (valid) {
-      loading.value = true
-      // 模拟API调用
-      setTimeout(() => {
+      try {
+        loading.value = true
+
+        // 准备提交数据
+        const submitData: UserInfo = {
+          id: 1, // 默认用户ID
+          nickname: infoForm.nickname,
+          realName: infoForm.realName,
+          gender: infoForm.gender,
+          birthday: infoForm.birthday,
+          bio: infoForm.bio,
+          email: infoForm.email,
+          phone: infoForm.phone,
+          qq: infoForm.qq,
+          wechat: infoForm.wechat,
+          location: infoForm.location || '',
+          address: infoForm.address,
+          skills: infoForm.skills.join(','),
+          hobbies: infoForm.hobbies.join(','),
+          github: infoForm.github,
+          website: infoForm.website ? `https://${infoForm.website}` : '',
+          education: infoForm.education,
+          school: infoForm.school
+        }
+
+        const response: any = await updatePersonInfo(submitData)
+        if (response.code === 200) {
+          ElMessage.success('个人信息更新成功！')
+        } else {
+          ElMessage.error(response.msg || '更新失败')
+        }
+      } catch (error) {
+        console.error('更新个人信息失败:', error)
+        ElMessage.error('更新失败，请稍后重试')
+      } finally {
         loading.value = false
-        ElMessage.success('个人信息更新成功！')
-        console.log('提交的数据:', infoForm)
-      }, 1500)
+      }
     } else {
       ElMessage.error('请完善表单信息')
     }
   })
-}
-
-// 重置表单
-const resetForm = (): void => {
-  if (!infoFormRef.value) return
-  infoFormRef.value.resetFields()
-  ElMessage.info('表单已重置')
 }
 </script>
 <style scoped>
@@ -440,45 +462,45 @@ const resetForm = (): void => {
   .info-container {
     padding: 16px;
   }
-  
+
   .page-header {
     padding: 16px;
   }
-  
+
   .header-content {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
   }
-  
+
   .title-wrapper {
     gap: 12px;
   }
-  
+
   .title-icon {
     width: 40px;
     height: 40px;
     font-size: 20px;
   }
-  
+
   .title-text h2 {
     font-size: 20px;
   }
-  
+
   .header-actions {
     width: 100%;
     justify-content: flex-end;
   }
-  
+
   .header-actions .el-button {
     flex: 1;
     max-width: 120px;
   }
-  
+
   .info-form {
     padding: 0 8px;
   }
-  
+
   :deep(.el-form-item__label) {
     text-align: left;
   }
