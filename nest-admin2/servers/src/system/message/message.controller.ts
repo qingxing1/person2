@@ -5,6 +5,7 @@ import { CreateUserMessageDto } from './dto/create-user-message.dto'
 import { UpdateUserMessageDto } from './dto/update-user-message.dto'
 import { FindMessageListDto } from './dto/find-message-list.dto'
 import { ResultData } from '../../common/utils/result'
+import { AllowAnon } from '../../common/decorators/allow-anon.decorator'
 
 @ApiTags('用户消息管理')
 @Controller('message')
@@ -15,6 +16,7 @@ export class MessageController {
    * 创建用户消息
    */
   @Post()
+  @AllowAnon()
   @ApiOperation({ summary: '创建用户消息' })
   @ApiBody({ type: CreateUserMessageDto })
   @ApiResponse({ status: 200, description: '创建成功', type: ResultData })

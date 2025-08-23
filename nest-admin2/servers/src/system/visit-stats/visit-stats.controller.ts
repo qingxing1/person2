@@ -2,6 +2,7 @@ import { Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger'
 import { VisitStatsService } from './visit-stats.service'
 import { ResultData } from '../../common/utils/result'
+import { AllowAnon } from '../../common/decorators/allow-anon.decorator'
 
 @ApiTags('网站访问量统计')
 @Controller('visit-stats')
@@ -9,6 +10,7 @@ export class VisitStatsController {
   constructor(private readonly visitStatsService: VisitStatsService) {}
 
   @Post('increment')
+  @AllowAnon()
   @ApiOperation({ summary: '增加访问量' })
   async incrementVisit(): Promise<ResultData> {
     return this.visitStatsService.incrementVisit()

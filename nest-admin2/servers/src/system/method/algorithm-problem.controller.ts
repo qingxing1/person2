@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger'
 
 import { ApiResult } from '../../common/decorators/api-result.decorator';
 import { ResultData } from '../../common/utils/result';
+import { AllowAnon } from '../../common/decorators/allow-anon.decorator';
 
 import { AlgorithmProblemEntity } from './algorithm-problem.entity';
 import { AlgorithmProblemService } from './algorithm-problem.service';
@@ -31,6 +32,7 @@ export class AlgorithmProblemController {
   }
 
   @Get('list')
+  @AllowAnon()
   @ApiOperation({ summary: '查询算法问题列表' })
   @ApiQuery({ name: 'title', required: false, description: '题目标题(模糊查询)' })
   @ApiQuery({ name: 'category', required: false, description: '算法分类' })
@@ -45,6 +47,7 @@ export class AlgorithmProblemController {
   }
 
   @Get(':id')
+  @AllowAnon()
   @ApiOperation({ summary: '查询单个算法问题' })
   @ApiResult(AlgorithmProblemEntity)
   async findOne(@Param('id') id: number): Promise<ResultData> {

@@ -4,6 +4,7 @@ import { PersonalService } from './personal.service'
 import { CreatePersonalInfoDto } from './dto/create-personal-info.dto'
 import { UpdatePersonalInfoDto } from './dto/update-personal-info.dto'
 import { ResultData } from '../../common/utils/result'
+import { AllowAnon } from '../../common/decorators/allow-anon.decorator'
 
 @ApiTags('个人信息管理')
 @Controller('personal')
@@ -25,6 +26,7 @@ export class PersonalController {
    * 获取所有个人信息列表
    */
   @Get()
+  @AllowAnon()
   @ApiOperation({ summary: '获取个人信息列表' })
   @ApiResponse({ status: 200, description: '获取成功', type: ResultData })
   async findAll(): Promise<ResultData> {
@@ -35,6 +37,7 @@ export class PersonalController {
    * 根据ID获取个人信息
    */
   @Get(':id')
+  @AllowAnon()
   @ApiOperation({ summary: '根据ID获取个人信息' })
   @ApiParam({ name: 'id', description: '个人信息ID', type: Number })
   @ApiResponse({ status: 200, description: '获取成功', type: ResultData })

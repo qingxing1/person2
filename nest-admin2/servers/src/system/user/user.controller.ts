@@ -20,6 +20,7 @@ import { UserEntity } from './user.entity'
 
 import { ResultData } from '../../common/utils/result'
 import { ApiResult } from '../../common/decorators/api-result.decorator'
+import { AllowAnon } from '../../common/decorators/allow-anon.decorator'
 
 import { FindUserListDto } from './dto/find-user-list.dto'
 import { UpdateUserDto } from './dto/update-user.dto'
@@ -40,6 +41,7 @@ export class UserController {
   }
 
   @Get('one/info')
+  @AllowAnon()
   @ApiOperation({ summary: '根据id查询用户信息' })
   @ApiQuery({ name: 'id' })
   @ApiResult(UserEntity)

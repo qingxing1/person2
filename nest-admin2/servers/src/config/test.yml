@@ -45,7 +45,17 @@ jwt:
 # 权限 白名单配置
 perm:
   router:
-    whitelist: [{ path: '/api/register', method: 'POST'  }, { path: '/api/login', method: 'POST' }, { path: '/api/perm/{id}', method: 'GET' }, { path: '/api/oss/upload', method: 'POST' }]
+    whitelist: 
+      - { path: '/api/register', method: 'POST' }
+      - { path: '/api/login', method: 'POST' }
+      - { path: '/api/perm/{id}', method: 'GET' }
+      - { path: '/api/oss/upload', method: 'POST' }
+      - { path: '/api/personal', method: 'GET' }
+      - { path: '/api/method/list', method: 'GET' }
+      - { path: '/api/blog/list', method: 'GET' }
+      - { path: '/api/message', method: 'POST' }
+      - { path: '/api/visit-stats/increment', method: 'POST' }
+      - { path: '/api/user/one/info', method: 'GET' }
 
 # 用户相关
 # 初始密码， 重置密码

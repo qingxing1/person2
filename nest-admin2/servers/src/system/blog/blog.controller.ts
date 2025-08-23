@@ -17,6 +17,7 @@ import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 
 import { ApiResult } from '../../common/decorators/api-result.decorator';
 import { ResultData } from '../../common/utils/result';
+import { AllowAnon } from '../../common/decorators/allow-anon.decorator';
 
 import { BlogEntity } from './blog.entity';
 import { BlogService } from './blog.service';
@@ -45,6 +46,7 @@ export class BlogController {
   }
 
   @Get('list')
+  @AllowAnon()
   @ApiOperation({ summary: '查询博客列表' })
   @ApiQuery({ name: 'title', required: false, description: '博客标题(模糊查询)' })
   @ApiQuery({ name: 'category', required: false, description: '博客分类' })
@@ -69,6 +71,7 @@ export class BlogController {
   }
 
   @Get(':id')
+  @AllowAnon()
   @ApiOperation({ summary: '查询单个博客' })
   @ApiResult(BlogEntity)
   async findOne(@Param('id') id: string): Promise<ResultData> {
