@@ -36,50 +36,41 @@
       <!-- 搜索和筛选区域 -->
       <div class="search-filter-section">
         <div class="search-row">
-          <el-input
-            v-model="searchTitle"
-            placeholder="请输入题目名称搜索"
-            clearable
-            class="search-input"
-            @clear="searchTitle = ''"
-          >
+          <el-input v-model="searchTitle" placeholder="请输入题目名称搜索" clearable class="search-input"
+            @clear="searchTitle = ''">
             <template #prefix>
-              <el-icon><Search /></el-icon>
+              <el-icon>
+                <Search />
+              </el-icon>
             </template>
           </el-input>
-          
-          <el-select
-            v-model="searchDifficulty"
-            placeholder="选择难度"
-            clearable
-            class="filter-select"
-            @clear="searchDifficulty = ''"
-          >
+
+          <el-select v-model="searchDifficulty" placeholder="选择难度" clearable class="filter-select"
+            @clear="searchDifficulty = ''">
             <el-option label="全部难度" value="" />
             <el-option label="简单" value="简单" />
             <el-option label="中等" value="中等" />
             <el-option label="困难" value="困难" />
           </el-select>
-          
-          <el-select
-            v-model="searchCategory"
-            placeholder="选择分类"
-            clearable
-            class="filter-select"
-            @clear="searchCategory = ''"
-          >
-           <div v-for="category in CATEGORY" :key="category">
-            <el-option :label="category" :value="category" />
-           </div>
+
+          <el-select v-model="searchCategory" placeholder="选择分类" clearable class="filter-select"
+            @clear="searchCategory = ''">
+            <div v-for="category in CATEGORY" :key="category">
+              <el-option :label="category" :value="category" />
+            </div>
           </el-select>
-          
-          <el-button type="primary" @click="currentPage = 1; initMethodList()">
-            <el-icon><Search /></el-icon>
+
+          <el-button type="primary" @click="triggerSearch">
+            <el-icon>
+              <Search />
+            </el-icon>
             搜索
           </el-button>
-          
-          <el-button @click="resetFilters">
-            <el-icon><Refresh /></el-icon>
+
+          <el-button @click="triggerReset">
+            <el-icon>
+              <Refresh />
+            </el-icon>
             重置
           </el-button>
         </div>
@@ -132,7 +123,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Grid, Search, Refresh } from '@element-plus/icons-vue'
 import ProblemList from './components/ProblemList.vue'
@@ -228,7 +219,9 @@ const handleSubmit = async (data: any) => {
   try {
     if (isEdit.value) {
       // 更新题目
-      const res: any = await updateMethod(data.id.toString(), data)
+      // 移除时间字段，避免传递空值
+      const { createdAt, updatedAt, ...updateData } = data
+      const res: any = await updateMethod(data.id.toString(), updateData)
       if (res.code === 200) {
         ElMessage.success('更新成功')
         initMethodList()
@@ -237,8 +230,8 @@ const handleSubmit = async (data: any) => {
       }
     } else {
       // 新增题目
-      // 移除id字段
-      const { id, ...rest } = data
+      // 移除id和时间字段，让后端自动生成
+      const { id, createdAt, updatedAt, ...rest } = data
       const res: any = await addMethod(rest)
       if (res.code === 200) {
         ElMessage.success('添加成功')
@@ -320,15 +313,17 @@ const handleUpdateAnswer = async () => {
 
 const resetForm = () => {
   Object.assign(currentProblem, {
-    id: 0,
+    id: '',
     title: '',
     difficulty: '中等',
     category: '',
     description: '',
     solution: '',
-    answer: '',
-    createdAt: ''
+    answer: ''
   })
+  // 删除时间字段，让后端自动处理
+  delete currentProblem.createdAt
+  delete currentProblem.updatedAt
   isEdit.value = false
 }
 
@@ -341,6 +336,25 @@ const resetFilters = () => {
   initMethodList()
 }
 
+const triggerSearch = () => {
+  if (searchTimer) clearTimeout(searchTimer)
+  currentPage.value = 1
+  searchTimer = setTimeout(() => {
+    initMethodList()
+  }, 300)
+}
+
+const triggerReset = () => {
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTitle.value = ''
+  searchDifficulty.value = ''
+  searchCategory.value = ''
+  currentPage.value = 1
+  searchTimer = setTimeout(() => {
+    initMethodList()
+  }, 300)
+}
+
 // 监听对话框关闭
 watch(() => showAddDialog.value, (val) => {
   if (!val) {
@@ -348,10 +362,14 @@ watch(() => showAddDialog.value, (val) => {
   }
 })
 
-// 监听筛选条件变化，自动重新加载数据
+// 监听筛选条件变化，自动重新加载数据（带防抖）
+let searchTimer: ReturnType<typeof setTimeout> | null = null
 watch([searchTitle, searchDifficulty, searchCategory], () => {
-  currentPage.value = 1 // 重置到第一页
-  initMethodList()
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    currentPage.value = 1 // 重置到第一页
+    initMethodList()
+  }, 500)
 })
 // 初始化方法列表
 const initMethodList = async () => {
@@ -361,12 +379,12 @@ const initMethodList = async () => {
       page: currentPage.value.toString(),
       limit: pageSize.value.toString()
     }
-    
+
     // 添加筛选参数
     if (searchTitle.value) query.title = searchTitle.value
     if (searchDifficulty.value) query.difficulty = searchDifficulty.value
     if (searchCategory.value) query.category = searchCategory.value
-    
+
     const res: any = await getMethodList(query)
     if (res.code === 200) {
       // 使用后端返回的分页数据结构
@@ -385,6 +403,13 @@ const initMethodList = async () => {
 onMounted(() => {
   // loadProblems()
   initMethodList()
+})
+
+// 组件卸载时清理定时器
+onUnmounted(() => {
+  if (searchTimer) {
+    clearTimeout(searchTimer)
+  }
 })
 </script>
 

@@ -180,8 +180,8 @@ const loadTodoStats = async () => {
     if (response.code === 200) {
       todoStats.value = {
         total: response.data.total || 0,
-        completed: response.data.completed || 0,
-        pending: response.data.pending || 0,
+        completed: response.data.completedCount || 0,
+        pending: response.data.pendingCount || 0,
         completionRate: response.data.completionRate || 0
       }
     }

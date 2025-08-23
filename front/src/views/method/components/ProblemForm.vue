@@ -91,12 +91,20 @@ interface FormData {
 const formRef = ref<FormInstance>()
 const form = ref<FormData>()
 
-// 初始化表单数据，移除创建时间和更新时间
+// 初始化表单数据，只保留需要的字段
 const initForm = () => {
-  // @ts-ignore
-  const { updatedAt, createdAt, ...rest } = props.modelValue
-  // 转换id为字符串
-  form.value = rest
+  const { updatedAt, createdAt, ...rest } = props.modelValue || {}
+  // 只保留需要的字段，移除时间字段
+  const { id, title, difficulty, category, description, solution, answer } = rest
+  form.value = {
+    id,
+    title: title || '',
+    difficulty: difficulty || '中等',
+    category: category || '',
+    description: description || '',
+    solution: solution || '',
+    answer: answer || ''
+  }
 }
 
 // 初始化表单
@@ -118,7 +126,10 @@ const rules: FormRules = {
 }
 
 watch(() => props.modelValue, (newVal) => {
-  form.value = { ...newVal }
+  if (newVal) {
+    const { updatedAt, createdAt, ...rest } = newVal
+    form.value = { ...rest }
+  }
 }, { deep: true })
 
 const submitForm = async () => {

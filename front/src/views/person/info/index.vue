@@ -42,9 +42,9 @@
           <el-col :span="12">
             <el-form-item label="性别" prop="gender">
               <el-select v-model="infoForm.gender" placeholder="请选择性别" style="width: 100%">
-                <el-option label="男" value="male" />
-                <el-option label="女" value="female" />
-                <el-option label="保密" value="secret" />
+                <el-option label="男" value="男" />
+                <el-option label="女" value="女" />
+                <el-option label="保密" value="保密" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -161,11 +161,11 @@
           <el-col :span="12">
             <el-form-item label="教育背景" prop="education">
               <el-select v-model="infoForm.education" placeholder="请选择最高学历" style="width: 100%">
-                <el-option label="高中" value="high_school" />
-                <el-option label="专科" value="college" />
-                <el-option label="本科" value="bachelor" />
-                <el-option label="硕士" value="master" />
-                <el-option label="博士" value="phd" />
+                <el-option label="高中" value="高中" />
+                <el-option label="专科" value="专科" />
+                <el-option label="本科" value="本科" />
+                <el-option label="硕士" value="硕士" />
+                <el-option label="博士" value="博士" />
               </el-select>
             </el-form-item>
           </el-col>

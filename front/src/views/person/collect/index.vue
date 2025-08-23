@@ -38,24 +38,22 @@
           />
         </div>
         <div class="filter-chips">
-          <el-tag
-            :type="selectedCategory === '' ? 'primary' : ''"
-            class="category-chip"
-            effect="light"
+          <div 
+            class="filter-chip"
+            :class="{ active: selectedCategory === '' }"
             @click="selectedCategory = ''"
           >
             全部
-          </el-tag>
-          <el-tag
+          </div>
+          <div 
             v-for="category in categories"
             :key="category.value"
-            :type="selectedCategory === category.value ? 'primary' : getCategoryType(category.value)"
-            class="category-chip"
-            effect="light"
+            class="filter-chip"
+            :class="{ active: selectedCategory === category.value }"
             @click="selectedCategory = category.value"
           >
             {{ category.label }}
-          </el-tag>
+          </div>
         </div>
       </div>
     </div>
@@ -625,17 +623,30 @@ function handleCurrentChange(current: number) {
   flex-wrap: wrap;
 }
 
-.category-chip {
+.filter-chip {
   border-radius: 20px;
   padding: 8px 16px;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  user-select: none;
 }
 
-.category-chip:hover {
+.filter-chip:hover {
+  background: #e2e8f0;
+  color: #1e293b;
   transform: translateY(-1px);
+}
+
+.filter-chip.active {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
 }
 
 .collect-list-card {
