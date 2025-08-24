@@ -11,7 +11,11 @@ export default {
     container: {
       center: true,
     },
-    extend: {},
+    extend: {
+      minHeight: {
+        "70vh": "70vh",
+      },
+    },
   },
   plugins: [],
 };

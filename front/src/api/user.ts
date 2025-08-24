@@ -67,7 +67,7 @@ export function updateToken(): Promise<ResultData<LoginResult>> {
   })
 }
 
-export function getUserInfo(id?: string): Promise<ResultData<UserApiResult>> {
+export function getUserInfo(id: string = '1'): Promise<ResultData<UserApiResult>> {
   return request<ResultData<UserApiResult>>({
     url: '/user/one/info',
     method: ApiMethodContants.GET,

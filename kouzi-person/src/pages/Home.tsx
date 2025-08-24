@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { getAvatar } from "@/services/common";
+import { getAvatar, addVisit } from "@/services/common";
 import { getPersonInfo } from "@/services/person";
 import { getMethodList } from '@/services/method';
 import { getBokeList } from '@/services/boke';
@@ -62,8 +62,8 @@ const getPerson = async () => {
   }
 };
 
-//
-export default function Home() {
+// Home 组件
+function Home() {
   const navigate = useNavigate();
   const stop = (e: React.MouseEvent) => e.stopPropagation();
   const onKeyGo = (go: () => void) => (e: React.KeyboardEvent) => {
@@ -102,6 +102,14 @@ export default function Home() {
     "#22d3ee", // cyan-400
     "#c084fc", // violet-400
   ];
+
+  // 页面访问统计
+  useEffect(() => {
+    // 增加访问量统计
+    addVisit().catch(err => {
+      console.error('访问统计记录失败:', err);
+    });
+  }, []);
 
   useEffect(() => {
     getAvatarUrl().then(setAvatarUrl);
@@ -412,7 +420,7 @@ export default function Home() {
   return (
     <div className="space-y-16">
       {/* 英雄区域 */}
-      <section className="flex flex-col md:flex-row items-center gap-10 py-10">
+      <section className="flex flex-col md:flex-row items-center gap-10 py-10 min-h-70vh" >
         <div className="md:w-1/2 space-y-6">
           <h1 className="text-4xl md:text-5xl font-bold leading-tight">
             你好，我是
@@ -443,7 +451,7 @@ export default function Home() {
           {/* 社交媒体链接 */}
           <div className="flex items-center gap-4 pt-4">
             <a
-              href="https://github.com/"
+              href="https://github.com/Coninute?tab=repositories"
               target="_blank"
               rel="noopener noreferrer"
               className="text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
@@ -451,28 +459,26 @@ export default function Home() {
               <i className="fa-brands fa-github text-xl"></i>
             </a>
             <a
-              href="https://linkedin.com/"
+              href="https://gitee.com/qiaoyuning"
               target="_blank"
               rel="noopener noreferrer"
               className="text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             >
-              <i className="fa-brands fa-linkedin text-xl"></i>
+              <i className="fa-brands fa-git text-xl"></i>
             </a>
             <a
-              href="https://twitter.com/"
+              href="https://blog.csdn.net/duduanwang?spm=1000.2115.3001.5343"
               target="_blank"
               rel="noopener noreferrer"
               className="text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             >
-              <i className="fa-brands fa-twitter text-xl"></i>
+              <i className="fa-brands fa-zhihu text-xl"></i>
             </a>
             <a
-              href="https://medium.com/"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="mailto:qiao252423@163.com"
               className="text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             >
-              <i className="fa-brands fa-medium text-xl"></i>
+              <i className="fa-solid fa-envelope text-xl"></i>
             </a>
           </div>
         </div>
@@ -678,3 +684,5 @@ export default function Home() {
     </div>
   );
 }
+
+export default Home;

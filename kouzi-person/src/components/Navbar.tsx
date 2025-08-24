@@ -11,6 +11,7 @@ export function Navbar({ onSearch }: NavbarProps) {
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -74,7 +75,7 @@ export function Navbar({ onSearch }: NavbarProps) {
             <div className="relative hidden md:block">
               <input
                 type="text"
-                placeholder="搜索一下"
+                placeholder="必应搜索..."
                 className="w-48 lg:w-64 pl-9 pr-4 py-2 rounded-full text-sm border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 transition-all"
                 value={searchQuery}
                 onChange={handleSearchChange}
@@ -102,18 +103,42 @@ export function Navbar({ onSearch }: NavbarProps) {
             </button>
             
             {/* 移动端菜单按钮 */}
-            <button className="md:hidden p-2 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
-              <i className="fa-solid fa-bars"></i>
+            <button 
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden p-2 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+            >
+              <i className={`fa-solid ${isMobileMenuOpen ? 'fa-xmark' : 'fa-bars'}`}></i>
             </button>
           </div>
         </div>
+
+        {/* 移动端菜单 */}
+        {isMobileMenuOpen && (
+          <nav className="md:hidden py-4 border-t border-gray-200 dark:border-gray-700">
+            {navItems.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={cn(
+                  "block px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-100 dark:hover:bg-gray-800",
+                  location.pathname === item.path
+                    ? "text-blue-600 dark:text-blue-400"
+                    : "text-gray-700 dark:text-gray-300"
+                )}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+        )}
         
         {/* 移动端搜索框 */}
         <div className="md:hidden pb-3">
           <div className="relative">
             <input
               type="text"
-              placeholder="搜索文章或算法..."
+              placeholder="必应搜索..."
               className="w-full pl-9 pr-4 py-2 rounded-full text-sm border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
               value={searchQuery}
               onChange={handleSearchChange}

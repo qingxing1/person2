@@ -84,20 +84,28 @@ export function Footer() {
             <ul className="space-y-2">
               <li className="flex items-center text-sm text-gray-600 dark:text-gray-300">
                 <i className="fa-brands fa-github w-5 mr-2 text-gray-400"></i>
-                <a href="https://github.com/" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                <a href="https://github.com/Coninute?tab=repositories" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                   GitHub
                 </a>
               </li>
               <li className="flex items-center text-sm text-gray-600 dark:text-gray-300">
-                <i className="fa-brands fa-linkedin w-5 mr-2 text-gray-400"></i>
-                <a href="https://linkedin.com/" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                  LinkedIn
+                <i className="fa-brands fa-git w-5 mr-2 text-gray-400"></i>
+                <a href="https://gitee.com/qiaoyuning" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                  Gitee
+                </a>
+              </li>
+               <li className="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                <div>
+                  <i className="fa-brands fa-zhihu w-5 mr-2 text-gray-400"></i>
+                </div>
+                <a href="https://blog.csdn.net/duduanwang?spm=1000.2115.3001.5343" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                  CSDN
                 </a>
               </li>
               <li className="flex items-center text-sm text-gray-600 dark:text-gray-300">
                 <i className="fa-solid fa-envelope w-5 mr-2 text-gray-400"></i>
-                <a href="mailto:contact@example.com" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                  contact@example.com
+                <a href="qiao252423@163.com" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                  qiao252423@163.com
                 </a>
               </li>
             </ul>

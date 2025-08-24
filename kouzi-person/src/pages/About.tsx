@@ -118,15 +118,15 @@ const getAvatarUrl = async () => {
   }
   
   return (
-    <div className="max-w-4xl mx-auto">
-      <header className="mb-12">
-        <h1 className="text-4xl font-bold mb-4">关于我</h1>
-        <div className="h-1 w-20 bg-blue-600 dark:bg-blue-400 rounded-full mb-8"></div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <header className="py-16 text-center">
+        <h1 className="text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">关于我</h1>
+        <div className="h-1.5 w-32 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 rounded-full mx-auto"></div>
       </header>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        {/* 左侧：个人简介 */}
-        <div className="lg:col-span-1 space-y-8">
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+        {/* 左侧：个人信息卡片 */}
+        <div className="xl:col-span-1 space-y-6">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
             <div className="flex flex-col items-center text-center">
               <div className="relative w-32 h-32 mb-4">
@@ -233,48 +233,76 @@ const getAvatarUrl = async () => {
         </div>
         
         {/* 右侧：详细信息 */}
-        <div className="lg:col-span-2 space-y-10">
+        <div className="xl:col-span-3 space-y-8">
           {/* 个人简介 */}
-          <section className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
-            <h2 className="text-2xl font-bold mb-4">个人简介</h2>
+          <section className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-8 border border-gray-100 dark:border-gray-700 mb-8">
+            <div className="flex items-center mb-6">
+              <i className="fa-solid fa-user-circle text-2xl text-blue-600 dark:text-blue-400 mr-3"></i>
+              <h2 className="text-2xl font-bold">个人简介</h2>
+            </div>
             <div className="prose prose-blue dark:prose-invert max-w-none">
-              <p className="mb-4">
+              <p className="mb-4 text-gray-700 dark:text-gray-300 leading-relaxed">
                 {personInfo.bio}
               </p>
               {personInfo.education && personInfo.school && (
-                <p className="mb-4">
+                <p className="mb-4 text-gray-700 dark:text-gray-300">
                   毕业于{personInfo.school}，获得{personInfo.education}学位。
                 </p>
               )}
-              <p>
+              <p className="text-gray-700 dark:text-gray-300">
                 我是一名热爱编程的全栈工程师，专注于前端技术开发和用户体验优化。
               </p>
             </div>
           </section>
           
-          {/* 技能 */}
+          {/* 专业技能（整行宽度） */}
           {skills.length > 0 && (
-            <section className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
-              <h2 className="text-2xl font-bold mb-4">专业技能</h2>
-              <div className="flex flex-wrap gap-2">
+            <section className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-8 border border-gray-100 dark:border-gray-700">
+              <div className="flex items-center mb-6">
+                <i className="fa-solid fa-code text-2xl text-blue-600 dark:text-blue-400 mr-3"></i>
+                <h2 className="text-2xl font-bold">专业技能</h2>
+              </div>
+              <div className="flex flex-wrap gap-3">
                 {skills.map((skill: string, index: number) => (
-                  <span key={index} className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm">
+                  <span 
+                    key={index} 
+                    className="px-4 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 text-blue-800 dark:text-blue-200 rounded-lg text-sm font-medium shadow-sm hover:shadow-md transition-shadow"
+                  >
                     {skill}
                   </span>
                 ))}
               </div>
             </section>
           )}
-          
-          {/* 地址信息 */}
-          {personInfo.address && (
-            <section className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
-              <h2 className="text-2xl font-bold mb-4">地址信息</h2>
-              <p className="text-gray-700 dark:text-gray-300">
-                {personInfo.address}
-              </p>
+
+          {/* 其他信息 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* 项目经历 */}
+            <section className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-8 border border-gray-100 dark:border-gray-700">
+              <div className="flex items-center mb-6">
+                <i className="fa-solid fa-laptop-code text-2xl text-blue-600 dark:text-blue-400 mr-3"></i>
+                <h2 className="text-2xl font-bold">项目经历</h2>
+              </div>
+              <div className="space-y-4">
+                <p className="text-gray-700 dark:text-gray-300">
+                  更多项目经历请访问我的 GitHub 和 Gitee主页查看。
+                </p>
+              </div>
             </section>
-          )}
+
+            {/* 地址信息 */}
+            {personInfo.address && (
+              <section className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-8 border border-gray-100 dark:border-gray-700">
+                <div className="flex items-center mb-6">
+                  <i className="fa-solid fa-map-marked-alt text-2xl text-blue-600 dark:text-blue-400 mr-3"></i>
+                  <h2 className="text-2xl font-bold">地址信息</h2>
+                </div>
+                <p className="text-gray-700 dark:text-gray-300">
+                  {personInfo.address}
+                </p>
+              </section>
+            )}
+          </div>
         </div>
       </div>
     </div>
