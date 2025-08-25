@@ -23,15 +23,33 @@
       </div>
 
       <el-form-item label="题目描述" prop="description">
-        <el-input v-model="form.description" type="textarea" :rows="6" placeholder="请输入题目描述" />
+        <MdEditor 
+          v-model="form.description" 
+          :theme="isDark ? 'dark' : 'light'"
+          language="zh-CN"
+          placeholder="请输入题目描述，支持Markdown语法"
+          class="markdown-editor"
+        />
       </el-form-item>
 
       <el-form-item label="解题思路" prop="solution">
-        <el-input v-model="form.solution" type="textarea" :rows="4" placeholder="请输入解题思路" />
+        <MdEditor 
+          v-model="form.solution" 
+          :theme="isDark ? 'dark' : 'light'"
+          language="zh-CN"
+          placeholder="请输入解题思路，支持Markdown语法"
+          class="markdown-editor"
+        />
       </el-form-item>
 
       <el-form-item label="答案" prop="answer">
-        <el-input v-model="form.answer" type="textarea" :rows="4" placeholder="请输入答案或代码" />
+        <MdEditor 
+          v-model="form.answer" 
+          :theme="isDark ? 'dark' : 'light'"
+          language="zh-CN"
+          placeholder="请输入答案或代码，支持Markdown语法"
+          class="markdown-editor"
+        />
       </el-form-item>
     </el-form>
 
@@ -46,6 +64,8 @@
 
 <script lang="ts" setup>
 import { ref, watch, computed } from 'vue'
+import { MdEditor } from 'md-editor-v3'
+import 'md-editor-v3/lib/style.css'
 import type { FormInstance, FormRules } from 'element-plus'
 import type { Category } from '@/api/method'
 
@@ -79,6 +99,7 @@ const emit = defineEmits<{
   'submit': [data: Problem]
   'cancel': []
 }>()
+
 interface FormData {
   id?: string
   title: string
@@ -88,8 +109,14 @@ interface FormData {
   solution?: string
   answer?: string
 }
+
 const formRef = ref<FormInstance>()
 const form = ref<FormData>()
+
+// 获取主题状态
+const isDark = computed(() => {
+  return document.documentElement.classList.contains('dark')
+})
 
 // 初始化表单数据，只保留需要的字段
 const initForm = () => {
@@ -109,7 +136,7 @@ const initForm = () => {
 
 // 初始化表单
 initForm()
-console.log(form.value)
+
 const rules: FormRules = {
   title: [
     { required: true, message: '请输入题目名称', trigger: 'blur' }
@@ -137,7 +164,6 @@ const submitForm = async () => {
 
   await formRef.value.validate((valid) => {
     if (valid) {
-      console.log("111",form.value)
       emit('submit', form.value)
     }
   })
@@ -187,23 +213,6 @@ const submitForm = async () => {
     border-radius: 8px;
   }
 
-  :deep(.el-textarea__inner) {
-    border-radius: 8px;
-    border: 1px solid #e2e8f0;
-    transition: all 0.3s ease;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  }
-
-  :deep(.el-textarea__inner:hover) {
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-  }
-
-  :deep(.el-textarea__inner:focus) {
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
-  }
-
   :deep(.el-button) {
     border-radius: 8px;
     font-weight: 500;
@@ -224,6 +233,19 @@ const submitForm = async () => {
   :deep(.el-button--default:hover) {
     transform: translateY(-1px);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  }
+
+  .markdown-editor {
+    height: 300px;
+    
+    :deep(.md-editor) {
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+    }
+    
+    :deep(.md-editor-toolbar) {
+      border-radius: 8px 8px 0 0;
+    }
   }
 
   /* 响应式设计 */

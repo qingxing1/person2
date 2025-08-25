@@ -17,7 +17,12 @@
         <el-tab-pane label="题目描述" name="description">
           <div class="content-section">
             <h4>题目描述</h4>
-            <div class="content-text" v-html="problem.description || '暂无描述'" />
+            <MdPreview 
+              :modelValue="problem.description || '暂无描述'" 
+              :theme="isDark ? 'dark' : 'light'"
+              previewTheme="github"
+              class="markdown-preview"
+            />
           </div>
         </el-tab-pane>
         
@@ -30,7 +35,12 @@
                 编辑思路
               </el-button>
             </div>
-            <div class="content-text" v-html="problem.solution || '暂无解题思路'" />
+            <MdPreview 
+              :modelValue="problem.solution || '暂无解题思路'" 
+              :theme="isDark ? 'dark' : 'light'"
+              previewTheme="github"
+              class="markdown-preview"
+            />
           </div>
         </el-tab-pane>
         
@@ -43,7 +53,12 @@
                 编辑答案
               </el-button>
             </div>
-            <div class="content-text" v-html="problem.answer || '暂无答案'" />
+            <MdPreview 
+              :modelValue="problem.answer || '暂无答案'" 
+              :theme="isDark ? 'dark' : 'light'"
+              previewTheme="github"
+              class="markdown-preview"
+            />
           </div>
         </el-tab-pane>
       </el-tabs>
@@ -59,9 +74,12 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { Edit } from '@element-plus/icons-vue'
+import { MdPreview } from 'md-editor-v3'
+import 'md-editor-v3/lib/preview.css'
 import type { Category } from '@/api/method'
+
 interface Problem {
   id: number
   title: string
@@ -87,6 +105,11 @@ const emit = defineEmits<{
 }>()
 
 const activeTab = ref('description')
+
+// 获取主题状态
+const isDark = computed(() => {
+  return document.documentElement.classList.contains('dark')
+})
 
 const getDifficultyType = (difficulty: string) => {
   const map = {
@@ -129,10 +152,10 @@ const getDifficultyType = (difficulty: string) => {
       }
     }
     
-    .content-text {
-      line-height: 1.8;
-      color: #606266;
-      white-space: pre-wrap;
+    .markdown-preview {
+      :deep(.md-editor-preview-wrapper) {
+        padding: 0;
+      }
     }
   }
   

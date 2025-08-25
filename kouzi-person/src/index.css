@@ -12,3 +12,48 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* 覆盖 md-editor-rt 预览背景，确保随外层卡片的主题变化 */
+.post-md-preview,
+.post-md-preview.md-editor,
+.post-md-preview .md-editor,
+.post-md-preview .md-editor-preview,
+.post-md-preview .md-editor-preview .md-preview,
+.post-md-preview .md-editor-preview .md-preview-wrapper {
+  background: transparent !important;
+}
+
+/* 保持代码块使用 md-editor-rt 默认背景（不透明） */
+
+/* 使用 CSS 变量覆盖 md-editor-rt 的背景色定义 */
+.post-md-preview {
+  --md-bk-color: transparent !important;
+  /* 文字颜色（亮色）*/
+  --md-color: rgb(17 24 39); /* tailwind slate-900 */
+  color: var(--md-color);
+}
+.post-md-preview .md-editor,
+.post-md-preview .md-editor-preview,
+.post-md-preview .md-editor-content,
+.post-md-preview .md-preview,
+.post-md-preview .md-preview-wrapper {
+  --md-bk-color: transparent !important;
+}
+.post-md-preview .markdown-body,
+.post-md-preview .md-editor-preview,
+.post-md-preview .md-editor-preview .md-preview,
+.post-md-preview .md-editor-preview .md-preview-wrapper {
+  color: var(--md-color) !important;
+}
+.dark .post-md-preview {
+  --md-bk-color: transparent !important;
+  /* 文字颜色（暗色）*/
+  --md-color: rgb(255, 255, 255); /* tailwind gray-100 */
+  color: var(--md-color);
+}
+.dark .post-md-preview .markdown-body,
+.dark .post-md-preview .md-editor-preview,
+.dark .post-md-preview .md-editor-preview .md-preview,
+.dark .post-md-preview .md-editor-preview .md-preview-wrapper {
+  color: var(--md-color) !important;
+}

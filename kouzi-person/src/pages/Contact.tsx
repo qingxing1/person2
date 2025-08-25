@@ -238,7 +238,7 @@ export default function Contact() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
         {/* 联系表单 */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-8 border border-gray-100 dark:border-gray-700">
-          <h2 className="text-2xl font-bold mb-6">发送消息</h2>
+          <h2 className="text-2xl font-bold mb-6">发送消息（请填写你的信息）</h2>
           <ContactForm />
         </div>
 

@@ -105,35 +105,45 @@ export class VisitStatsService {
           break
       }
 
-      // 使用更简单的查询方式，直接获取实体
-      const allStats = await this.visitStatsRepository.find({
-        order: { date: 'ASC' }
-      })
+      // 计算日期范围
+      const endDate = new Date()
+      const startDate = new Date()
+      startDate.setDate(startDate.getDate() - days + 1)
 
-      // 如果数据库中没有数据，返回空数组
-      if (!allStats || allStats.length === 0) {
-        return ResultData.ok({
-          data: [],
-          period: period,
-          requestedDays: days,
-          actualDays: 0,
-          message: '暂无访问数据'
+      // 格式化为 YYYY-MM-DD
+      const startDateStr = startDate.toISOString().split('T')[0]
+      const endDateStr = endDate.toISOString().split('T')[0]
+
+      // 按日期范围查询数据
+      const stats = await this.visitStatsRepository
+        .createQueryBuilder('visit_stats')
+        .where('visit_stats.date >= :startDate', { startDate: startDateStr })
+        .andWhere('visit_stats.date <= :endDate', { endDate: endDateStr })
+        .orderBy('visit_stats.date', 'ASC')
+        .getMany()
+
+      // 如果没有数据，生成完整的日期序列（包括缺失的日期）
+      const result = []
+      const statsMap = new Map(stats.map(stat => [stat.date, stat.count]))
+      
+      for (let i = 0; i < days; i++) {
+        const date = new Date(startDate)
+        date.setDate(date.getDate() + i)
+        const dateStr = date.toISOString().split('T')[0]
+        
+        result.push({
+          date: dateStr,
+          count: statsMap.get(dateStr) || 0
         })
       }
 
-      // 直接转换实体数据
-      const trendData = allStats.map(stat => ({
-        date: stat.date,
-        count: stat.count
-      }))
-
       return ResultData.ok({
-        data: trendData,
+        data: result,
         period: period,
         requestedDays: days,
-        actualDays: trendData.length,
-        startDate: trendData[0]?.date,
-        endDate: trendData[trendData.length - 1]?.date
+        actualDays: stats.length,
+        startDate: startDateStr,
+        endDate: endDateStr
       })
     } catch (error) {
       console.error('获取访问趋势失败:', error)

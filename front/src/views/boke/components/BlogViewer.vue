@@ -32,7 +32,12 @@
       </div>
 
       <div class="blog-content">
-        <div class="content-body" v-html="renderedContent"></div>
+        <MdPreview 
+          :modelValue="blog.content" 
+          :theme="isDark ? 'dark' : 'light'"
+          previewTheme="github"
+          class="markdown-preview"
+        />
       </div>
     </div>
 
@@ -46,11 +51,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { marked } from 'marked'
+import { ref, watch, computed } from 'vue'
+import { MdPreview } from 'md-editor-v3'
+import 'md-editor-v3/lib/preview.css'
 import type { Blog } from '../types/blog'
 import emitter from '@/utils/mitt'
-
 
 const props = defineProps<{
   visible: boolean
@@ -64,13 +69,13 @@ const emit = defineEmits<{
 
 const visible = ref(false)
 
-watch(() => props.visible, (newVal) => {
-  visible.value = newVal
+// 获取主题状态
+const isDark = computed(() => {
+  return document.documentElement.classList.contains('dark')
 })
 
-const renderedContent = computed(() => {
-  if (!props.blog?.content) return ''
-  return marked(props.blog.content)
+watch(() => props.visible, (newVal) => {
+  visible.value = newVal
 })
 
 const handleClose = () => {
@@ -119,108 +124,9 @@ const handleEdit = () => {
   }
 
   .blog-content {
-    .content-body {
-      line-height: 1.8;
-      color: var(--el-text-color-primary);
-
-      :deep(h1),
-      :deep(h2),
-      :deep(h3),
-      :deep(h4),
-      :deep(h5),
-      :deep(h6) {
-        margin: 20px 0 10px 0;
-        font-weight: bold;
-      }
-
-      :deep(h1) {
-        font-size: 28px;
-      }
-
-      :deep(h2) {
-        font-size: 24px;
-      }
-
-      :deep(h3) {
-        font-size: 20px;
-      }
-
-      :deep(h4) {
-        font-size: 18px;
-      }
-
-      :deep(h5) {
-        font-size: 16px;
-      }
-
-      :deep(h6) {
-        font-size: 14px;
-      }
-
-      :deep(p) {
-        margin: 10px 0;
-      }
-
-      :deep(code) {
-        background-color: var(--el-fill-color-lighter);
-        padding: 2px 6px;
-        border-radius: 3px;
-        font-family: 'Courier New', monospace;
-      }
-
-      :deep(pre) {
-        background-color: var(--el-fill-color-lighter);
-        padding: 15px;
-        border-radius: 4px;
-        overflow-x: auto;
-        margin: 15px 0;
-
-        code {
-          background-color: transparent;
-          padding: 0;
-        }
-      }
-
-      :deep(blockquote) {
-        border-left: 4px solid var(--el-color-primary);
-        padding-left: 15px;
-        margin: 15px 0;
-        color: var(--el-text-color-secondary);
-      }
-
-      :deep(ul),
-      :deep(ol) {
-        margin: 10px 0;
-        padding-left: 25px;
-      }
-
-      :deep(li) {
-        margin: 5px 0;
-      }
-
-      :deep(img) {
-        max-width: 100%;
-        height: auto;
-        margin: 10px 0;
-        border-radius: 4px;
-      }
-
-      :deep(table) {
-        border-collapse: collapse;
-        width: 100%;
-        margin: 15px 0;
-      }
-
-      :deep(th),
-      :deep(td) {
-        border: 1px solid var(--el-border-color);
-        padding: 8px 12px;
-        text-align: left;
-      }
-
-      :deep(th) {
-        background-color: var(--el-fill-color-lighter);
-        font-weight: bold;
+    .markdown-preview {
+      :deep(.md-editor-preview-wrapper) {
+        padding: 0;
       }
     }
   }

@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getBokeDetail } from '@/services/boke';
-import { CodeBlock } from '@/components/CodeBlock';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import { MdPreview, MdCatalog } from 'md-editor-rt';
+import 'md-editor-rt/lib/preview.css';
+import { useTheme } from '@/hooks/useTheme';
 
 export default function BlogPostPage() {
   const { id } = useParams<{ id: string }>();
@@ -11,6 +11,33 @@ export default function BlogPostPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [post, setPost] = useState<any | null>(null);
+  const { isDark } = useTheme();
+  // 监听 documentElement 的 class 变化，保证本页可实时感知主题切换
+  const [isDarkTheme, setIsDarkTheme] = useState<boolean>(() => {
+    if (typeof document !== 'undefined') {
+      return document.documentElement.classList.contains('dark');
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const target = document.documentElement;
+    const observer = new MutationObserver(() => {
+      setIsDarkTheme(target.classList.contains('dark'));
+    });
+    observer.observe(target, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
+
+  // 预览样式：背景透明 + 覆盖 md-editor-rt 背景变量
+  const previewStyle = useMemo(() => {
+    const style: React.CSSProperties & Record<string, string> = {
+      backgroundColor: 'transparent',
+    } as any;
+    style['--md-bk-color'] = 'transparent';
+    return style;
+  }, []);
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -58,32 +85,31 @@ export default function BlogPostPage() {
     );
   }
 
-  // 自定义 markdown 渲染组件（代码块）
-  const mdComponents = {
-    code({ inline, className, children, ...props }: any) {
-      const match = /language-(\w+)/.exec(className || '');
-      const code = String(children || '');
-      if (!inline) {
-        return <CodeBlock code={code} language={(match && match[1]) || 'text'} />;
-      }
-      return <code className={className} {...props}>{children}</code>;
-    },
-    img({ src = '', alt = '', ...props }: any) {
-      // 直接输出图片，支持外链
-      return (
-        <img src={src} alt={alt} className="max-w-full h-auto rounded-lg" {...props} />
-      );
-    },
-  } as any;
+  // 预览组件使用 md-editor-rt（md-editor-v3 的 React 版本）
 
   const tags: string[] = typeof post.tags === 'string' && post.tags
     ? post.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
     : [];
 
   return (
-    <article className="max-w-4xl mx-auto">
-      {/* 文章头部 */}
-      <header className="mb-10">
+    <article className="max-w-6xl mx-auto">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* 左侧目录（lg及以上显示） */}
+        <aside className="hidden lg:block lg:col-span-3">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border border-gray-100 dark:border-gray-700 sticky top-24 max-h-[calc(100vh-8rem)] overflow-auto">
+            <h3 className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-200">目录</h3>
+            <MdCatalog
+              editorId="post-preview"
+              theme={(isDark || isDarkTheme) ? 'dark' : 'light'}
+              className="text-sm"
+            />
+          </div>
+        </aside>
+
+        {/* 右侧主要内容区 */}
+        <div className="lg:col-span-9">
+          {/* 文章头部 */}
+          <header className="mb-10">
         <div className="flex items-center mb-4">
           <Link 
             to="/blog" 
@@ -141,38 +167,40 @@ export default function BlogPostPage() {
             />
           </div>
         )}
-      </header>
+          </header>
 
-      
-
-      {/* 文章内容 */}
-      <div className="grid grid-cols-1 gap-8">
-        {/* 文章内容区 */}
-        <div className="prose prose-lg dark:prose-invert max-w-none">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-8 border border-gray-100 dark:border-gray-700">
-            <div className="prose prose-blue dark:prose-invert max-w-none">
-              <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
-                {post.content || ''}
-              </ReactMarkdown>
-            </div>
-
-            {/* 标签 */}
-            {tags.length > 0 && (
-              <div className="mt-10 pt-6 border-t border-gray-200 dark:border-gray-700">
-                <h3 className="text-lg font-semibold mb-3">标签</h3>
-                <div className="flex flex-wrap gap-2">
-                  {tags.map((tag: string) => (
-                    <Link
-                      key={tag}
-                      to={`/blog?tag=${encodeURIComponent(tag)}`}
-                      className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-full"
-                    >
-                      #{tag}
-                    </Link>
-                  ))}
-                </div>
+          {/* 文章内容 */}
+          <div className="prose prose-lg dark:prose-invert max-w-none">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-8 border border-gray-100 dark:border-gray-700">
+              <div className="prose prose-blue dark:prose-invert max-w-none">
+                <MdPreview
+                  editorId="post-preview"
+                  key={(isDark || isDarkTheme) ? 'dark' : 'light'}
+                  modelValue={post.content || ''}
+                  theme={(isDark || isDarkTheme) ? 'dark' : 'light'}
+                  style={previewStyle}
+                  className="post-md-preview"
+                />
               </div>
-            )}
+
+              {/* 标签 */}
+              {tags.length > 0 && (
+                <div className="mt-10 pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <h3 className="text-lg font-semibold mb-3">标签</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {tags.map((tag: string) => (
+                      <Link
+                        key={tag}
+                        to={`/blog?tag=${encodeURIComponent(tag)}`}
+                        className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-full"
+                      >
+                        #{tag}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

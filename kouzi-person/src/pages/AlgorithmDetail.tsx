@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getMethodDetail } from '@/services/method';
-import { CodeBlock } from '@/components/CodeBlock';
 import { cn } from '@/lib/utils';
+import { MdPreview } from 'md-editor-rt';
+import { useTheme } from '@/hooks/useTheme';
+import { useMemo } from 'react';
 
 // 根据难度返回不同的颜色类
 const getDifficultyColor = (difficulty: string) => {
@@ -29,6 +31,34 @@ export default function AlgorithmDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [detail, setDetail] = useState<any | null>(null);
+  const { isDark } = useTheme();
+
+  // 监听 documentElement 的 class 变化，保证本页可实时感知主题切换
+  const [isDarkTheme, setIsDarkTheme] = useState<boolean>(() => {
+    if (typeof document !== 'undefined') {
+      return document.documentElement.classList.contains('dark');
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const target = document.documentElement;
+    const observer = new MutationObserver(() => {
+      setIsDarkTheme(target.classList.contains('dark'));
+    });
+    observer.observe(target, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
+
+  // 预览样式：背景透明 + 覆盖 md-editor-rt 背景变量（保持与外层卡片一致）
+  const previewStyle = useMemo(() => {
+    const style: React.CSSProperties & Record<string, string> = {
+      backgroundColor: 'transparent',
+    } as any;
+    (style as any)['--md-bk-color'] = 'transparent';
+    return style;
+  }, []);
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -51,7 +81,7 @@ export default function AlgorithmDetail() {
     };
     fetchDetail();
   }, [id]);
-  
+
   if (loading) {
     return (
       <div className="text-center py-16">
@@ -75,32 +105,32 @@ export default function AlgorithmDetail() {
       </div>
     );
   }
-  
+
   return (
     <div className="max-w-4xl mx-auto">
       {/* 算法头部 */}
       <header className="mb-10">
         <div className="flex items-center mb-4">
-          <Link 
-            to="/algorithms" 
+          <Link
+            to="/algorithms"
             className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 flex items-center"
           >
             <i className="fa-solid fa-arrow-left mr-1"></i> 返回算法列表
           </Link>
         </div>
-        
+
         <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white leading-tight">
             {detail.title}
           </h1>
-          
+
           {detail.difficulty && (
             <span className={`px-3 py-1 text-sm font-semibold rounded-full ${getDifficultyColor(detail.difficulty)}`}>
               {getDifficultyLabel(detail.difficulty)}
             </span>
           )}
         </div>
-        
+
         <div className="flex flex-wrap gap-2 mb-6">
           {detail.category && (
             <Link
@@ -117,7 +147,7 @@ export default function AlgorithmDetail() {
           )}
         </div>
       </header>
-      
+
       {/* 算法内容 */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
         {/* 标签页导航 */}
@@ -158,32 +188,55 @@ export default function AlgorithmDetail() {
             </button>
           </div>
         </div>
-        
+
         {/* 标签页内容 */}
         <div className="p-6">
           {activeTab === 'description' && (
             <div className="prose prose-blue dark:prose-invert max-w-none">
               <h2 className="text-2xl font-bold mb-4">问题描述</h2>
-              <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg mb-6 whitespace-pre-wrap text-sm">
-                {detail.description || '暂无描述'}
+              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg mb-6 text-sm border border-gray-100 dark:border-gray-700">
+                <MdPreview
+                  editorId="algo-desc"
+                  key={(isDark || isDarkTheme) ? 'dark' : 'light'}
+                  modelValue={detail.description || '暂无描述'}
+                  theme={(isDark || isDarkTheme) ? 'dark' : 'light'}
+                  style={previewStyle}
+                  className="post-md-preview"
+                />
               </div>
             </div>
           )}
-          
+
           {activeTab === 'solution' && (
             <div className="prose prose-blue dark:prose-invert max-w-none">
               <h2 className="text-2xl font-bold mb-4">解题思路</h2>
-              <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg mb-6 whitespace-pre-wrap text-sm">
-                {detail.solution || '暂无方案'}
+              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg mb-6 text-sm border border-gray-100 dark:border-gray-700">
+                <MdPreview
+                  editorId="algo-solution"
+                  key={(isDark || isDarkTheme) ? 'dark' : 'light'}
+                  modelValue={detail.solution || '暂无方案'}
+                  theme={(isDark || isDarkTheme) ? 'dark' : 'light'}
+                  style={previewStyle}
+                  className="post-md-preview"
+                />
               </div>
             </div>
           )}
-          
+
           {activeTab === 'answer' && (
             <div className="prose prose-blue dark:prose-invert max-w-none">
               <h2 className="text-2xl font-bold mb-4">参考答案</h2>
               {detail.answer ? (
-                <CodeBlock code={String(detail.answer)} language="text" />
+                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg mb-6 text-sm border border-gray-100 dark:border-gray-700">
+                  <MdPreview
+                    editorId="algo-answer"
+                    key={(isDark || isDarkTheme) ? 'dark' : 'light'}
+                    modelValue={String(detail.answer)}
+                    theme={(isDark || isDarkTheme) ? 'dark' : 'light'}
+                    style={previewStyle}
+                    className="post-md-preview"
+                  />
+                </div>
               ) : (
                 <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg mb-6 text-sm text-gray-600 dark:text-gray-300">暂无答案</div>
               )}

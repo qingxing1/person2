@@ -23,6 +23,7 @@
     "element-plus": "^2.3.7",
     "jwt-decode": "^3.1.2",
     "marked": "^16.1.2",
+    "md-editor-v3": "^5.8.4",
     "mitt": "^3.0.1",
     "normalize.css": "^8.0.1",
     "nprogress": "^0.2.0",

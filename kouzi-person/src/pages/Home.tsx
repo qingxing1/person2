@@ -5,6 +5,7 @@ import { getPersonInfo } from "@/services/person";
 import { getMethodList } from '@/services/method';
 import { getBokeList } from '@/services/boke';
 import * as echarts from "echarts";
+import { extractTextFromMarkdown } from '@/utils/text-handle';
 
 // 根据难度返回不同的颜色类
 const getDifficultyColor = (difficulty: string) => {
@@ -583,7 +584,7 @@ function Home() {
                 </h3>
 
                 <p className="text-gray-600 dark:text-gray-300 text-sm mb-3 line-clamp-2">
-                  {typeof post.content === 'string' ? `${post.content.substring(0, 120)}...` : ''}
+                  {typeof post.content === 'string' ? `${ extractTextFromMarkdown(post.content).substring(0, 120)}...` : ''}
                 </p>
 
                 <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mt-auto pt-2">
@@ -647,7 +648,7 @@ function Home() {
                 </div>
 
                 <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-3 flex-grow">
-                  {algorithm.description}
+                  {extractTextFromMarkdown(algorithm.description)}
                 </p>
 
                 <div className="flex flex-wrap gap-2">

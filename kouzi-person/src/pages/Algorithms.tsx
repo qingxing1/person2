@@ -3,6 +3,7 @@ import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { getMethodList } from '@/services/method';
 import { cn } from '@/lib/utils';
 import { methodConfig } from '@/config/method.config';
+import { extractTextFromMarkdown } from '@/utils/text-handle';
 
 // 算法卡片组件
 function AlgorithmCard({ algorithm }: { algorithm: any }) {
@@ -53,7 +54,7 @@ function AlgorithmCard({ algorithm }: { algorithm: any }) {
         </div>
         
         <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-3">
-          {algorithm.description}
+          { extractTextFromMarkdown(algorithm.description)}
         </p>
         
         <div className="flex flex-wrap gap-2 mb-4">

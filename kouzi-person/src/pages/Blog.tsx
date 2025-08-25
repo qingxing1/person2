@@ -3,6 +3,7 @@ import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { getBokeList } from '@/services/boke';
 import { cn } from '@/lib/utils';
 import { bokeConfig } from '@/config/boke.config';
+import { extractTextFromMarkdown } from '@/utils/text-handle'
 
 // 博客卡片组件 - 适配后端数据结构
 function BlogCard({ post }: { post: any }) {
@@ -62,7 +63,7 @@ function BlogCard({ post }: { post: any }) {
         </h2>
         
         <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-3">
-          {post.content.substring(0, 150)}...
+          { extractTextFromMarkdown(post.content).substring(0, 150) }
         </p>
         
         <div className="flex flex-wrap gap-2 mb-4">
