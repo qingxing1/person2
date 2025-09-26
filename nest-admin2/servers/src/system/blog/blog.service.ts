@@ -215,7 +215,7 @@ export class BlogService {
     fs.writeFileSync(filePath, fileData);
     
     // 返回访问URL
-    const domain = this.config.get<string>('app.file.domain') || 'http://localhost:8081';
+    const domain = this.config.get<string>('app.file.domain') || 'http://localhost:6999';
     const serveRoot = this.config.get<string>('app.file.serveRoot') || '/static';
     
     return `${domain}${serveRoot}/${subDir}/${fileName}`;

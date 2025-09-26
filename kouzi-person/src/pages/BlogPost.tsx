@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getBokeDetail } from '@/services/boke';
 import { MdPreview, MdCatalog } from 'md-editor-rt';
@@ -12,6 +12,7 @@ export default function BlogPostPage() {
   const [error, setError] = useState<string | null>(null);
   const [post, setPost] = useState<any | null>(null);
   const { isDark } = useTheme();
+  const scrollElementRef = useRef<HTMLElement | null>(null);
   // 监听 documentElement 的 class 变化，保证本页可实时感知主题切换
   const [isDarkTheme, setIsDarkTheme] = useState<boolean>(() => {
     if (typeof document !== 'undefined') {
@@ -27,6 +28,10 @@ export default function BlogPostPage() {
       setIsDarkTheme(target.classList.contains('dark'));
     });
     observer.observe(target, { attributes: true, attributeFilter: ['class'] });
+    
+    // 设置滚动容器
+    scrollElementRef.current = document.documentElement;
+    
     return () => observer.disconnect();
   }, []);
 
@@ -102,6 +107,7 @@ export default function BlogPostPage() {
               editorId="post-preview"
               theme={(isDark || isDarkTheme) ? 'dark' : 'light'}
               className="text-sm"
+              scrollElement={scrollElementRef.current || document.documentElement}
             />
           </div>
         </aside>

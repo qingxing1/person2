@@ -61,7 +61,7 @@ import BlogList from './components/BlogList.vue'
 import BlogEditor from './components/BlogEditor.vue'
 import BlogViewer from './components/BlogViewer.vue'
 import MarkdownUploader from './components/MarkdownUploader.vue'
-import { getBokeList } from '@/api/boke'
+import { getBlogList } from '@/api/boke'
 
 
 import type { Blog, BlogFormData } from './types/blog'

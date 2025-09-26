@@ -4,7 +4,7 @@
 
 <script lang="ts" setup>
 import * as echarts from 'echarts'
-import { computed, onBeforeUnmount, onMounted, watch, type HTMLAttributes, type PropType } from 'vue'
+import { computed, onBeforeUnmount, onMounted, watch, nextTick, type HTMLAttributes, type PropType } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 
 const props = defineProps({
@@ -62,15 +62,34 @@ watch(
 // 响应式
 const resize = useDebounceFn(() => {
   chart?.resize()
-}, 500)
+}, 100)
+
+// 强制重新调整图表大小
+const forceResize = () => {
+  if (chart) {
+    // 强制重新计算容器大小
+    const container = document.getElementById(id)
+    if (container) {
+      const { width, height } = container.getBoundingClientRect()
+      chart.resize({ width, height })
+    }
+  }
+}
 
 onMounted(() => {
-  // 增加延时器，解决切换页面时 echarts 图 width 没有占满的 bug
-  const timeout = setTimeout(() => {
-    initChart()
-    window.addEventListener('resize', resize)
-    clearTimeout(timeout)
-  }, 500)
+  // 使用 nextTick 确保 DOM 完全渲染后再初始化
+  nextTick(() => {
+    const timeout = setTimeout(() => {
+      initChart()
+      // 初始化后立即调整一次大小
+      setTimeout(() => {
+        forceResize()
+      }, 100)
+      
+      window.addEventListener('resize', resize)
+      clearTimeout(timeout)
+    }, 200)
+  })
 })
 
 onBeforeUnmount(() => {

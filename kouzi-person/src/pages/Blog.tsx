@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { getBokeList } from '@/services/boke';
 import { cn } from '@/lib/utils';
-import { bokeConfig } from '@/config/boke.config';
-import { extractTextFromMarkdown } from '@/utils/text-handle'
+import { bokeConfig, type Category, type Tag } from '@/config/boke.config';
+import { extractTextFromMarkdown } from '@/utils/text-handle';
+import CollapsibleSidebar from '@/components/CollapsibleSidebar';
 
 // 博客卡片组件 - 适配后端数据结构
 function BlogCard({ post }: { post: any }) {
@@ -89,89 +90,7 @@ function BlogCard({ post }: { post: any }) {
   );
 }
 
-// 分类列表组件
-function CategoryList({ 
-  categories, 
-  activeCategory, 
-  onSelectCategory 
-}: { 
-  categories: Category[]; 
-  activeCategory?: string; 
-  onSelectCategory: (category: string) => void;
-}) {
-  return (
-    <div>
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">文章分类</h3>
-      <div className="space-y-2">
-        <button
-          onClick={() => onSelectCategory('')}
-          className={cn(
-            "w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors",
-            !activeCategory ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300" : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700"
-          )}
-        >
-          全部分类
-        </button>
-        {categories.map(category => (
-          <button
-            key={category.slug}
-            onClick={() => onSelectCategory(category.name)}  // 传递汉字名称
-            className={cn(
-              "w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors",
-              activeCategory === category.name  // 比较汉字名称
-                ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
-                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700"
-            )}
-          >
-            {category.name}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
 
-// 标签云组件
-function TagCloud({ 
-  tags, 
-  activeTag, 
-  onSelectTag 
-}: { 
-  tags: Tag[]; 
-  activeTag?: string; 
-  onSelectTag: (tag: string) => void;
-}) {
-  return (
-    <div>
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">热门标签</h3>
-      <div className="flex flex-wrap gap-2">
-        <button
-          onClick={() => onSelectTag('')}
-          className={cn(
-            "px-3 py-1 rounded-full text-sm transition-colors",
-            !activeTag ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium" : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-          )}
-        >
-          全部标签
-        </button>
-        {tags.map(tag => (
-          <button
-            key={tag.slug}
-            onClick={() => onSelectTag(tag.name)}  // 传递汉字名称
-            className={cn(
-              "px-3 py-1 rounded-full text-sm font-medium transition-colors",
-              activeTag === tag.name  // 比较汉字名称
-                ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
-                : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-            )}
-          >
-            {tag.name}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 export default function Blog() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -384,21 +303,16 @@ export default function Blog() {
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* 侧边栏 - 分类和标签 */}
+        {/* 侧边栏 - 可折叠的分类和标签 */}
         <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700">
-            <CategoryList 
-              categories={bokeConfig.categories} 
-              activeCategory={activeCategory}
-              onSelectCategory={handleCategoryFilter}
-            />
-            <div className="border-t border-gray-200 dark:border-gray-700 my-5 pt-5"></div>
-            <TagCloud 
-              tags={bokeConfig.tags} 
-              activeTag={activeTag}
-              onSelectTag={handleTagFilter}
-            />
-          </div>
+          <CollapsibleSidebar
+            categories={bokeConfig.categories}
+            tags={bokeConfig.tags}
+            activeCategory={activeCategory}
+            activeTag={activeTag}
+            onSelectCategory={handleCategoryFilter}
+            onSelectTag={handleTagFilter}
+          />
         </div>
         
         {/* 主内容区 - 博客文章列表 */}

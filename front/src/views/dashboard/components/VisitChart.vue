@@ -8,7 +8,9 @@
         <el-radio-button value="nine">90天</el-radio-button>
       </el-radio-group>
     </div>
-    <Charts :options="chartOptions" height="300px" />
+    <div class="chart-wrapper">
+      <Charts :options="chartOptions" height="300px" />
+    </div>
   </div>
 </template>
 
@@ -77,6 +79,8 @@ const chartOptions = computed(() => ({
   padding: 24px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
   margin-bottom: 16px;
+  width: 100%;
+  min-width: 0; // 防止flex布局中的收缩问题
 
   .card-header {
     display: flex;
@@ -89,6 +93,18 @@ const chartOptions = computed(() => ({
       font-size: 18px;
       font-weight: 600;
       color: #303133;
+    }
+  }
+
+  .chart-wrapper {
+    width: 100%;
+    min-height: 300px;
+    position: relative;
+    
+    // 确保图表容器有正确的宽度
+    :deep(.echart-container) {
+      width: 100% !important;
+      min-width: 0;
     }
   }
 }

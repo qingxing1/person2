@@ -57,3 +57,29 @@
 .dark .post-md-preview .md-editor-preview .md-preview-wrapper {
   color: var(--md-color) !important;
 }
+
+/* 修复 md-editor-rt 目录跳转问题 */
+.post-md-preview h1,
+.post-md-preview h2,
+.post-md-preview h3,
+.post-md-preview h4,
+.post-md-preview h5,
+.post-md-preview h6 {
+  scroll-margin-top: 2rem;
+}
+
+/* 确保目录能正确跳转到标题 */
+.post-md-preview .md-editor-preview h1,
+.post-md-preview .md-editor-preview h2,
+.post-md-preview .md-editor-preview h3,
+.post-md-preview .md-editor-preview h4,
+.post-md-preview .md-editor-preview h5,
+.post-md-preview .md-editor-preview h6 {
+  scroll-margin-top: 2rem;
+  position: relative;
+}
+
+/* 修复可能的滚动平滑性问题 */
+html {
+  scroll-behavior: smooth;
+}

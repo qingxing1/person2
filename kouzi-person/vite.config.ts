@@ -8,7 +8,7 @@ function getPlugins() {
 }
 
 // 开发环境的后端地址
-const devBackendUrl = 'http://127.0.0.1:8081';
+const devBackendUrl = 'http://115.190.32.31:6999';
 
 export default defineConfig({
   plugins: getPlugins(),

@@ -65,13 +65,17 @@ export default defineConfig((env: ConfigEnv) => {
     server: {
       open: true, // 启动后自动打开浏览器
       cors: true,
-      proxy: {
-        '/api': {
-          target: 'http://127.0.0.1:8081',
-          ws: true,
-          changeOrigin: true
-        }
-      }
+      ...(env.mode === 'development'
+        ? {
+            proxy: {
+              '/api': {
+                target: 'http://115.190.32.31:6999',
+                ws: true,
+                changeOrigin: true
+              }
+            }
+          }
+        : {})
     },
     optimizeDeps: {
       include: [

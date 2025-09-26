@@ -369,6 +369,19 @@ onMounted(() => {
     margin-bottom: 12px;
   }
 
+  // 确保栅格布局正确显示
+  :deep(.el-row) {
+    width: 100%;
+  }
+
+  :deep(.el-col) {
+    min-width: 0; // 防止flex布局中的收缩问题
+  }
+
+  // 图表区域样式
+  .content-row {
+    margin-top: 16px;
+  }
 }
 
 @media only screen and (max-width: 768px) {

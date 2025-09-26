@@ -7,7 +7,7 @@ const API_BASE_URL = isDev ? '/api' : import.meta.env.VITE_API_BASE_URL || '/api
 
 // 创建axios实例
 const request: AxiosInstance = axios.create({
-  baseURL: API_BASE_URL, // 开发环境自动代理到127.0.0.1:8081
+  baseURL: API_BASE_URL, // 开发环境自动代理到115.190.32.31:6999
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

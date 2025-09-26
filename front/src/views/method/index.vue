@@ -93,7 +93,7 @@
     </el-dialog>
 
     <!-- 详情对话框 -->
-    <el-dialog v-model="showDetailDialog" title="题目详情" width="800px" :close-on-click-modal="false">
+    <el-dialog v-model="showDetailDialog" title="题目详情" width="800px" :close-on-click-modal="false" style="max-height: 90vh; overflow-y: auto;">
       <ProblemDetail :problem="currentProblem" @close="showDetailDialog = false" @edit-problem="handleEditFromDetail"
         @edit-solution="handleEditSolution" @edit-answer="handleEditAnswer" />
     </el-dialog>
