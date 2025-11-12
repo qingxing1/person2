@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getPersonInfo } from '@/services/person';
 import { getAvatar } from "@/services/common";
+import { AboutMeData } from '@/lib/aboutTypes';
 
 export default function About() {
-  const [personInfo, setPersonInfo] = useState<any>(null);
+  const [personInfo, setPersonInfo] = useState<AboutMeData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -47,63 +48,12 @@ export default function About() {
     }
   };
 
-  // 处理技能字符串为数组
-  const skills = personInfo?.skills ? personInfo.skills.split(',').map((s: string) => s.trim()) : [];
+  // 处理技能数组（直接使用API返回的数组）
+  const skills = personInfo?.skills || [];
 
-  // 处理爱好字符串为数组
-  const hobbies = personInfo?.hobbies ? personInfo.hobbies.split(',').map((h: string) => h.trim()) : [];
+  // 处理爱好数组（直接使用API返回的数组）
+  const hobbies = personInfo?.hobbies || [];
 
-  // 模拟项目数据（实际项目中可从API获取）
-  const mockProjects = [
-    {
-      id: 1,
-      title: '个人博客系统',
-      description: '基于 React + Node.js 开发的现代化博客平台，支持 Markdown 编辑、评论系统和响应式设计。',
-      tech: ['React', 'Node.js', 'MongoDB', 'Express'],
-      link: personInfo?.github ? `https://github.com/${personInfo.github}/blog` : '#',
-    },
-    {
-      id: 2,
-      title: '电商管理后台',
-      description: '使用 Vue 3 + Element Plus 构建的电商管理系统，包含商品、订单、用户管理等功能模块。',
-      tech: ['Vue 3', 'Element Plus', 'TypeScript', 'Axios'],
-      link: personInfo?.github ? `https://github.com/${personInfo.github}/admin` : '#',
-    },
-  ];
-
-  // 模拟工作经历（实际项目中可从API获取）
-  const mockWorkExperience = [
-    {
-      year: '2023-至今',
-      position: '全栈工程师',
-      company: '科技有限公司',
-      description: '负责公司前端和后端项目的开发与维护，参与技术架构设计和性能优化工作。',
-    },
-    {
-      year: '2021-2023',
-      position: '前端工程师',
-      company: '互联网公司',
-      description: '专注于前端界面开发，使用 React 和 Vue 构建用户友好的 Web 应用。',
-    },
-  ];
-
-  // 模拟教育背景（实际项目中可从API获取）
-  const mockEducation = [
-    {
-      year: '2017-2021',
-      degree: '本科',
-      major: '计算机科学与技术',
-      school: '某大学',
-      description: '系统学习计算机科学基础知识，包括数据结构、算法、操作系统等核心课程，并参与多个实践项目提升编程能力。',
-    },
-    {
-      year: '2021-2023',
-      degree: '硕士',
-      major: '软件工程',
-      school: '某科技大学',
-      description: '深入研究软件工程理论与实践，专注于前端技术和用户体验优化，发表多篇相关学术论文。',
-    },
-  ];
 
   if (loading) {
     return (
@@ -154,13 +104,13 @@ export default function About() {
                   <div className="space-y-3">
                     <div>
                       <h1 className="text-[clamp(1.2rem,2.5vw,2rem)] font-bold text-slate-900 dark:text-white text-center md:text-left mb-1.5">
-                        {personInfo.nickname || personInfo.realName}
+                        {personInfo.nickname || personInfo.real_name}
                       </h1>
                       {/* Personal Motto */}
                       <div className="flex items-center justify-center md:justify-start gap-2 mb-3">
                         <i className="fa-solid fa-quote-left text-indigo-500 text-lg"></i>
                         <p className="text-slate-700 dark:text-slate-300 text-sm sm:text-base italic">
-                          技术改变世界，代码创造未来
+                          {personInfo.motto || "技术改变世界，代码创造未来"}
                         </p>
                         <i className="fa-solid fa-quote-right text-indigo-500 text-lg"></i>
                       </div>
@@ -287,10 +237,10 @@ export default function About() {
           </div>
           <div className="space-y-2 sm:space-y-3 text-slate-700 dark:text-slate-300 text-sm sm:text-base leading-relaxed">
             <p>{personInfo.bio}</p>
-            {personInfo.education && personInfo.school && (
+            {personInfo.degree_simple && personInfo.school_simple && (
               <p>
-                毕业于 <span className="text-indigo-600 dark:text-indigo-400 font-medium">{personInfo.school}</span>，获得
-                <span className="text-indigo-600 dark:text-indigo-400 font-medium">{personInfo.education}</span> 学位。
+                毕业于 <span className="text-indigo-600 dark:text-indigo-400 font-medium">{personInfo.school_simple}</span>，获得
+                <span className="text-indigo-600 dark:text-indigo-400 font-medium">{personInfo.degree_simple}</span> 学位。
               </p>
             )}
             <p>
@@ -332,7 +282,7 @@ export default function About() {
 
           {/* Timeline */}
           <div className="space-y-4 sm:space-y-5">
-            {mockEducation.map((education, index) => (
+            {personInfo.education_history.map((education, index) => (
               <div key={index} className="flex gap-3 sm:gap-4">
                 {/* Year */}
                 <div className="flex-shrink-0 pt-0.5">
@@ -366,7 +316,7 @@ export default function About() {
 
           {/* Timeline */}
           <div className="space-y-4 sm:space-y-5">
-            {mockWorkExperience.map((experience, index) => (
+            {personInfo.work_experience.map((experience, index) => (
               <div key={index} className="flex gap-3 sm:gap-4">
                 {/* Year */}
                 <div className="flex-shrink-0 pt-0.5">
@@ -420,9 +370,9 @@ export default function About() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-            {mockProjects.map((project) => (
+            {personInfo.projects.map((project, projectIndex) => (
               <a
-                key={project.id}
+                key={projectIndex}
                 href={project.link}
                 target="_blank"
                 rel="noopener noreferrer"
