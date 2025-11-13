@@ -19,7 +19,9 @@ export class BlogConfigService {
    * 获取博客配置
    */
   async getConfig(): Promise<ResultData> {
-    const config = await this.blogConfigRepo.findOne({});
+    const config = await this.blogConfigRepo.findOne({
+      where: {}
+    });
     if (!config) return ResultData.fail(AppHttpCode.DATA_IS_EMPTY, '配置不存在');
     return ResultData.ok(config);
   }
@@ -29,7 +31,9 @@ export class BlogConfigService {
    */
   async updateConfig(categories: Array<{ id: string; name: string; slug: string }>, tags: Array<{ id: string; name: string; slug: string }>): Promise<ResultData> {
     // 先查找是否有配置
-    let config = await this.blogConfigRepo.findOne({});
+    let config = await this.blogConfigRepo.findOne({
+      where: {}
+    });
 
     if (config) {
       // 更新配置
@@ -55,7 +59,9 @@ export class BlogConfigService {
    * 获取博客分类
    */
   async getCategories(): Promise<ResultData> {
-    const config = await this.blogConfigRepo.findOne({});
+    const config = await this.blogConfigRepo.findOne({
+      where: {}
+    });
     if (!config) return ResultData.fail(AppHttpCode.DATA_IS_EMPTY, '配置不存在');
     return ResultData.ok(config.categories || []);
   }
@@ -64,7 +70,9 @@ export class BlogConfigService {
    * 获取博客标签
    */
   async getTags(): Promise<ResultData> {
-    const config = await this.blogConfigRepo.findOne({});
+    const config = await this.blogConfigRepo.findOne({
+      where: {}
+    });
     if (!config) return ResultData.fail(AppHttpCode.DATA_IS_EMPTY, '配置不存在');
     return ResultData.ok(config.tags || []);
   }

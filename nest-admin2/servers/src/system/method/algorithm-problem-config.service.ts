@@ -19,7 +19,9 @@ export class AlgorithmProblemConfigService {
    * 获取算法配置
    */
   async getConfig(): Promise<ResultData> {
-    const config = await this.algorithmConfigRepo.findOne({});
+    const config = await this.algorithmConfigRepo.findOne({
+      where: {}
+    });
     if (!config) return ResultData.fail(AppHttpCode.DATA_IS_EMPTY, '配置不存在');
     return ResultData.ok(config);
   }
@@ -29,7 +31,9 @@ export class AlgorithmProblemConfigService {
    */
   async updateConfig(categories: Array<{ id: string; name: string; slug: string }>): Promise<ResultData> {
     // 先查找是否有配置
-    let config = await this.algorithmConfigRepo.findOne({});
+    let config = await this.algorithmConfigRepo.findOne({
+      where: {}
+    });
 
     if (config) {
       // 更新配置
@@ -54,7 +58,9 @@ export class AlgorithmProblemConfigService {
    * 获取算法分类
    */
   async getCategories(): Promise<ResultData> {
-    const config = await this.algorithmConfigRepo.findOne({});
+    const config = await this.algorithmConfigRepo.findOne({
+      where: {}
+    });
     if (!config) return ResultData.fail(AppHttpCode.DATA_IS_EMPTY, '配置不存在');
     return ResultData.ok(config.categories || []);
   }
