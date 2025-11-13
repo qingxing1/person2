@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getAvatar, addVisit } from "@/services/common";
-import { getPersonInfo } from "@/services/person";
 import { getMethodList } from '@/services/method';
 import { getBokeList } from '@/services/boke';
+import { usePerson } from '@/contexts/PersonContext';
 import * as echarts from "echarts";
 import { extractTextFromMarkdown } from '@/utils/text-handle';
 
@@ -16,7 +16,7 @@ const getDifficultyColor = (difficulty: string) => {
       return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300";
     case "困难":
       return "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300";
-   
+    
     default:
       return "bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300";
   }
@@ -36,36 +36,10 @@ const getDifficultyLabel = (difficulty: string) => {
   }
 };
 
-// 获取头像
-const getAvatarUrl = async () => {
-  try {
-    const res = await getAvatar();
-    if (res && res.data && res.data.avatar) {
-      return res.data.avatar;
-    }
-    return "/avatar.png";
-  } catch (error) {
-    return "/avatar.png";
-  }
-};
-
-// 获取个人信息
-const getPerson = async () => {
-  try {
-    const res = await getPersonInfo();
-    console.log("获取个人信息接口响应:", res);
-    if (res && res.data) {
-      return res.data[0];
-    }
-    return {};
-  } catch (error) {
-    return {};
-  }
-};
-
 // Home 组件
 function Home() {
   const navigate = useNavigate();
+  const { personInfo, avatarUrl } = usePerson();
   const stop = (e: React.MouseEvent) => e.stopPropagation();
   const onKeyGo = (go: () => void) => (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -73,8 +47,6 @@ function Home() {
       go();
     }
   };
-  // 头像地址
-  const [avatarUrl, setAvatarUrl] = useState("/avatar.png");
   // 用户名
   const [username, setUsername] = useState("技术开发者");
   // 首页展示列表（来自后端）
@@ -113,15 +85,11 @@ function Home() {
   }, []);
 
   useEffect(() => {
-    getAvatarUrl().then(setAvatarUrl);
-    getPerson().then((data: any) => {
-      setUsername(data?.nickname || "技术开发者");
+    if (personInfo) {
+      setUsername(personInfo.nickname || "技术开发者");
       // 解析后端 skills 字符串为展示用数组
-      if (data?.skills && typeof data.skills === "string") {
-        const parsed = data.skills
-          .split(",")
-          .map((s: string) => s.trim())
-          .filter(Boolean)
+      if (personInfo.skills && Array.isArray(personInfo.skills)) {
+        const parsed = personInfo.skills
           .map((name: string, idx: number) => ({
             name,
             // 给一个合理的展示分值，若未来后端提供 level 则可直接使用
@@ -132,18 +100,14 @@ function Home() {
         setSkills([]);
       }
 
-      // 解析兴趣爱好（后端逗号分隔字符串）
-      if (data?.hobbies && typeof data.hobbies === "string") {
-        const hobbyList = data.hobbies
-          .split(",")
-          .map((s: string) => s.trim())
-          .filter(Boolean);
-        setHobbies(hobbyList);
+      // 解析兴趣爱好（后端数组）
+      if (personInfo.hobbies && Array.isArray(personInfo.hobbies)) {
+        setHobbies(personInfo.hobbies);
       } else {
         setHobbies([]);
       }
-    });
-  }, []);
+    }
+  }, [personInfo]);
 
   // 获取首页列表：最新博客（3条）与算法（3条）
   useEffect(() => {

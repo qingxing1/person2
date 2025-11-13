@@ -13,7 +13,7 @@ export class PersonalInfoEntity {
   nickname?: string
 
   @ApiProperty({ description: '真实姓名', required: false })
-  @Column({ type: 'varchar', length: 50, comment: '真实姓名', nullable: true })
+  @Column({ type: 'varchar', length: 50, name: 'real_name', comment: '真实姓名', nullable: true })
   realName?: string
 
   @ApiProperty({ description: '座右铭/个人口号', required: false })
@@ -82,20 +82,20 @@ export class PersonalInfoEntity {
 
   // 教育信息
   @ApiProperty({ description: '简略学位', required: false })
-  @Column({ type: 'varchar', length: 50, comment: '简略学位（如“硕士”）', nullable: true })
+  @Column({ type: 'varchar', length: 50, name: 'degree_simple', comment: '简略学位（如“硕士”）', nullable: true })
   degreeSimple?: string
 
   @ApiProperty({ description: '简略学校名称', required: false })
-  @Column({ type: 'varchar', length: 100, comment: '简略学校名称', nullable: true })
+  @Column({ type: 'varchar', length: 100, name: 'school_simple', comment: '简略学校名称', nullable: true })
   schoolSimple?: string
 
   @ApiProperty({ description: '详细教育经历', required: false, example: '[{"year":"2017-2021","degree":"本科","major":"计算机科学","school":"XX大学","description":"..."}]' })
-  @Column({ type: 'json', comment: '详细教育经历：[{"year":"2017-2021","degree":"本科","major":"计算机科学","school":"XX大学","description":"..."}]', nullable: true })
+  @Column({ type: 'json', name: 'education_history', comment: '详细教育经历：[{"year":"2017-2021","degree":"本科","major":"计算机科学","school":"XX大学","description":"..."}]', nullable: true })
   educationHistory?: JSON
 
   // 工作与项目经历
   @ApiProperty({ description: '工作经历', required: false, example: '[{"year":"2023-至今","position":"全栈工程师","company":"科技公司","description":"..."}]' })
-  @Column({ type: 'json', comment: '工作经历：[{"year":"2023-至今","position":"全栈工程师","company":"科技公司","description":"..."}]', nullable: true })
+  @Column({ type: 'json', name: 'work_experience', comment: '工作经历：[{"year":"2023-至今","position":"全栈工程师","company":"科技公司","description":"..."}]', nullable: true })
   workExperience?: JSON
 
   @ApiProperty({ description: '项目经历', required: false, example: '[{"title":"个人博客","description":"...","tech":["React","Node.js"],"link":"https://github.com/xxx"}]' })
@@ -104,7 +104,7 @@ export class PersonalInfoEntity {
 
   // 个人评价模块（新增）
   @ApiProperty({ description: '自我评价', required: false })
-  @Column({ type: 'text', comment: '自我评价：描述个人优势、工作风格、职业理念等', nullable: true })
+  @Column({ type: 'text', name: 'self_evaluation', comment: '自我评价：描述个人优势、工作风格、职业理念等', nullable: true })
   selfEvaluation?: string
 
   // 系统字段

@@ -1,52 +1,8 @@
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getPersonInfo } from '@/services/person';
-import { getAvatar } from "@/services/common";
-import { AboutMeData } from '@/lib/aboutTypes';
+import { usePerson } from '@/contexts/PersonContext';
 
 export default function About() {
-  const [personInfo, setPersonInfo] = useState<AboutMeData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchPersonInfo();
-    getAvatarUrl().then(url => setAvatarUrl(url));
-  }, []);
-
-
-  const fetchPersonInfo = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await getPersonInfo();
-
-      if (response.code === 200 && response.data && response.data.length > 0) {
-        setPersonInfo(response.data[0]); // 始终展示第一个
-      } else {
-        setError(response.msg || '获取个人信息失败');
-      }
-    } catch (err) {
-      setError('网络错误，请稍后重试');
-      console.error('获取个人信息失败:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 获取头像
-  const getAvatarUrl = async () => {
-    try {
-      const res = await getAvatar();
-      if (res && res.data && res.data.avatar) {
-        return res.data.avatar;
-      }
-      return "/avatar.png";
-    } catch (error) {
-      return "/avatar.png";
-    }
-  };
+  const { personInfo, avatarUrl, loading, error, refreshPersonInfo } = usePerson();
 
   // 处理技能数组（直接使用API返回的数组）
   const skills = personInfo?.skills || [];
@@ -63,7 +19,7 @@ export default function About() {
 
   if (error) {
     return (
-     <ErrorComponent fetchPersonInfo={fetchPersonInfo} ></ErrorComponent>
+     <ErrorComponent refreshPersonInfo={refreshPersonInfo} ></ErrorComponent>
     );
   }
 
@@ -236,17 +192,17 @@ export default function About() {
             <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">关于我</h2>
           </div>
           <div className="space-y-2 sm:space-y-3 text-slate-700 dark:text-slate-300 text-sm sm:text-base leading-relaxed">
-            <p>{personInfo.bio}</p>
+            {personInfo.bio ? (
+              <p>{personInfo.bio}</p>
+            ) : (
+              <p className="text-slate-500 dark:text-slate-400 italic">暂无个人简介</p>
+            )}
             {personInfo.degree_simple && personInfo.school_simple && (
               <p>
                 毕业于 <span className="text-indigo-600 dark:text-indigo-400 font-medium">{personInfo.school_simple}</span>，获得
                 <span className="text-indigo-600 dark:text-indigo-400 font-medium">{personInfo.degree_simple}</span> 学位。
               </p>
             )}
-            <p>
-              我是一名热爱编程的全栈工程师，专注于前端技术开发和用户体验优化，始终追求编写高质量、可维护的代码。
-              我坚信技术的价值在于解决实际问题，通过持续学习和实践不断提升自己的技术能力。
-            </p>
           </div>
         </div>
 
@@ -259,15 +215,11 @@ export default function About() {
             <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">自我评价</h2>
           </div>
           <div className="space-y-2 sm:space-y-3 text-slate-700 dark:text-slate-300 text-sm sm:text-base leading-relaxed">
-            <p>
-              我是一个对技术充满热情的全栈工程师，具备扎实的前端开发能力和良好的后端技术基础。
-              擅长将用户需求转化为高质量的技术实现，注重代码的可维护性和用户体验。
-              具有良好的团队协作精神和解决问题的能力，能够快速适应新的技术栈和工作环境。
-            </p>
-            <p>
-              平时喜欢关注前端技术发展趋势，不断学习和探索新技术，致力于提升自己的技术能力。
-              坚信技术的价值在于解决实际问题，希望通过自己的努力创造出有价值的产品和服务。
-            </p>
+            {personInfo.self_evaluation ? (
+              <p>{personInfo.self_evaluation}</p>
+            ) : (
+              <p className="text-slate-500 dark:text-slate-400 italic">暂无自我评价</p>
+            )}
           </div>
         </div>
 
@@ -282,26 +234,32 @@ export default function About() {
 
           {/* Timeline */}
           <div className="space-y-4 sm:space-y-5">
-            {personInfo.education_history.map((education, index) => (
-              <div key={index} className="flex gap-3 sm:gap-4">
-                {/* Year */}
-                <div className="flex-shrink-0 pt-0.5">
-                  <div className="w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs sm:text-sm font-medium">
-                    {education.year.split('-')[0]}
+            {personInfo.education_history && personInfo.education_history.length > 0 ? (
+              personInfo.education_history.map((education, index) => (
+                <div key={index} className="flex gap-3 sm:gap-4">
+                  {/* Year */}
+                  <div className="flex-shrink-0 pt-0.5">
+                    <div className="w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs sm:text-sm font-medium">
+                      {education.year.split('-')[0]}
+                    </div>
                   </div>
-                </div>
 
-                {/* Content */}
-                <div className="flex-1">
-                  <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <h3 className="text-base font-semibold text-slate-900 dark:text-white">{education.degree} - {education.major}</h3>
-                    <span className="text-indigo-600 dark:text-indigo-400 text-xs sm:text-sm font-medium">{education.school}</span>
-                    <span className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">{education.year}</span>
+                  {/* Content */}
+                  <div className="flex-1">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <h3 className="text-base font-semibold text-slate-900 dark:text-white">{education.degree} - {education.major}</h3>
+                      <span className="text-indigo-600 dark:text-indigo-400 text-xs sm:text-sm font-medium">{education.school}</span>
+                      <span className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">{education.year}</span>
+                    </div>
+                    <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm">{education.description || ''}</p>
                   </div>
-                  <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm">{education.description}</p>
                 </div>
+              ))
+            ) : (
+              <div className="text-slate-600 dark:text-slate-400 text-sm">
+                暂无教育背景信息
               </div>
-            ))}
+            )}
           </div>
         </div>
 
@@ -316,26 +274,32 @@ export default function About() {
 
           {/* Timeline */}
           <div className="space-y-4 sm:space-y-5">
-            {personInfo.work_experience.map((experience, index) => (
-              <div key={index} className="flex gap-3 sm:gap-4">
-                {/* Year */}
-                <div className="flex-shrink-0 pt-0.5">
-                  <div className="w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs sm:text-sm font-medium">
-                    {experience.year.split('-')[0]}
+            {personInfo.work_experience && personInfo.work_experience.length > 0 ? (
+              personInfo.work_experience.map((experience, index) => (
+                <div key={index} className="flex gap-3 sm:gap-4">
+                  {/* Year */}
+                  <div className="flex-shrink-0 pt-0.5">
+                    <div className="w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs sm:text-sm font-medium">
+                      {experience.year.split('-')[0]}
+                    </div>
                   </div>
-                </div>
 
-                {/* Content */}
-                <div className="flex-1">
-                  <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <h3 className="text-base font-semibold text-slate-900 dark:text-white">{experience.position}</h3>
-                    <span className="text-indigo-600 dark:text-indigo-400 text-xs sm:text-sm font-medium">{experience.company}</span>
-                    <span className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">{experience.year}</span>
+                  {/* Content */}
+                  <div className="flex-1">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <h3 className="text-base font-semibold text-slate-900 dark:text-white">{experience.position}</h3>
+                      <span className="text-indigo-600 dark:text-indigo-400 text-xs sm:text-sm font-medium">{experience.company}</span>
+                      <span className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">{experience.year}</span>
+                    </div>
+                    <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm">{experience.description}</p>
                   </div>
-                  <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm">{experience.description}</p>
                 </div>
+              ))
+            ) : (
+              <div className="text-slate-600 dark:text-slate-400 text-sm">
+                暂无工作经历信息
               </div>
-            ))}
+            )}
           </div>
         </div>
 
@@ -370,31 +334,37 @@ export default function About() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-            {personInfo.projects.map((project, projectIndex) => (
-              <a
-                key={projectIndex}
-                href={project.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block rounded-lg p-3 sm:p-4 bg-white/90 dark:bg-slate-800/90 border border-slate-200/50 dark:border-slate-700/50 hover:shadow-md hover:scale-[1.015] transition-all duration-300"
-              >
-                <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
-                  <i className="fa-solid fa-rocket text-indigo-500 text-xs sm:text-sm"></i>
-                  <h3 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">{project.title}</h3>
-                </div>
-                <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm mb-2 sm:mb-3 line-clamp-2">{project.description}</p>
-                <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                  {project.tech.map((tech, techIndex) => (
-                    <span
-                      key={techIndex}
-                      className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-200 text-xs font-medium rounded-full"
-                    >
-                      {tech}
-                    </span>
-                  ))}
-                </div>
-              </a>
-            ))}
+            {personInfo.projects && personInfo.projects.length > 0 ? (
+              personInfo.projects.map((project, projectIndex) => (
+                <a
+                  key={projectIndex}
+                  href={project.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block rounded-lg p-3 sm:p-4 bg-white/90 dark:bg-slate-800/90 border border-slate-200/50 dark:border-slate-700/50 hover:shadow-md hover:scale-[1.015] transition-all duration-300"
+                >
+                  <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
+                    <i className="fa-solid fa-rocket text-indigo-500 text-xs sm:text-sm"></i>
+                    <h3 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">{project.title}</h3>
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm mb-2 sm:mb-3 line-clamp-2">{project.description}</p>
+                  <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                    {project.tech.map((tech, techIndex) => (
+                      <span
+                        key={techIndex}
+                        className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-200 text-xs font-medium rounded-full"
+                      >
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+                </a>
+              ))
+            ) : (
+              <div className="text-slate-600 dark:text-slate-400 text-sm">
+                暂无项目经历信息
+              </div>
+            )}
           </div>
 
           {/* More Projects */}
@@ -477,7 +447,7 @@ function LoadingComponent() {
 }
 
 // 错误处理组件
-function ErrorComponent(props: { fetchPersonInfo: () => void }) {
+function ErrorComponent(props: { refreshPersonInfo: () => void }) {
   return (
      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-800 py-24">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -486,7 +456,7 @@ function ErrorComponent(props: { fetchPersonInfo: () => void }) {
               <i className="fa-solid fa-exclamation-circle text-8xl text-red-400 mb-6"></i>
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">加载失败</h2>
               <button
-                onClick={props.fetchPersonInfo}
+                onClick={props.refreshPersonInfo}
                 className="px-6 py-3 bg-indigo-600 dark:bg-indigo-500 text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-300 font-medium"
               >
                 重新加载

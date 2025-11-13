@@ -69,7 +69,8 @@ export default defineConfig((env: ConfigEnv) => {
         ? {
             proxy: {
               '/api': {
-                target: 'http://115.190.32.31:6999',
+                // target: 'http://115.190.32.31:6999',
+                target: 'http://localhost:6999',
                 ws: true,
                 changeOrigin: true
               }

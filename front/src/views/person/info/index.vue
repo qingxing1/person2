@@ -56,6 +56,10 @@
           </el-col>
         </el-row>
 
+        <el-form-item label="座右铭" prop="motto">
+          <el-input v-model="infoForm.motto" placeholder="您的座右铭或格言" maxlength="50" show-word-limit />
+        </el-form-item>
+
         <el-form-item label="个人简介" prop="bio">
           <el-input v-model="infoForm.bio" type="textarea" :rows="3" placeholder="简短介绍自己，最多200字" maxlength="200"
             show-word-limit />
@@ -125,8 +129,6 @@
           <TagSelector v-model="infoForm.skills" :available-tags="skillOptions" placeholder="请输入或选择您的技术栈" />
         </el-form-item>
 
-
-
         <!-- 兴趣爱好 -->
         <el-divider content-position="left">兴趣爱好</el-divider>
 
@@ -138,14 +140,21 @@
         <el-divider content-position="left">社交媒体</el-divider>
 
         <el-row :gutter="20">
-          <el-col :span="12">
+          <el-col :span="8">
             <el-form-item label="GitHub" prop="github">
               <el-input v-model="infoForm.github" placeholder="GitHub用户名">
                 <template #prepend>github.com/</template>
               </el-input>
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :span="8">
+            <el-form-item label="Gitee" prop="gitee">
+              <el-input v-model="infoForm.gitee" placeholder="Gitee用户名">
+                <template #prepend>gitee.com/</template>
+              </el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
             <el-form-item label="个人网站" prop="website">
               <el-input v-model="infoForm.website" placeholder="个人网站或博客地址">
                 <template #prepend>https://</template>
@@ -154,27 +163,106 @@
           </el-col>
         </el-row>
 
-        <!-- 扩展信息 -->
-        <el-divider content-position="left">扩展信息</el-divider>
+        <!-- 教育经历 -->
+        <el-divider content-position="left">教育经历</el-divider>
 
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="教育背景" prop="education">
-              <el-select v-model="infoForm.education" placeholder="请选择最高学历" style="width: 100%">
-                <el-option label="高中" value="高中" />
-                <el-option label="专科" value="专科" />
-                <el-option label="本科" value="本科" />
-                <el-option label="硕士" value="硕士" />
-                <el-option label="博士" value="博士" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="毕业院校" prop="school">
-              <el-input v-model="infoForm.school" placeholder="请输入毕业院校" />
-            </el-form-item>
-          </el-col>
-        </el-row>
+        <div v-for="(item, index) in infoForm.educationHistory" :key="index" class="dynamic-form-item">
+          <EducationForm :item="item" :index="index" />
+          <el-button 
+            type="danger" 
+            size="small" 
+            @click="removeEducationItem(index)"
+            class="remove-btn"
+          >
+            <el-icon>
+              <Delete />
+            </el-icon>
+          </el-button>
+        </div>
+        
+        <el-button 
+          type="primary" 
+          size="small" 
+          @click="addEducationItem"
+          class="add-btn"
+        >
+          <el-icon>
+            <Plus />
+          </el-icon>
+          添加教育经历
+        </el-button>
+
+        <!-- 工作经历 -->
+        <el-divider content-position="left">工作经历</el-divider>
+
+        <div v-for="(item, index) in infoForm.workExperience" :key="index" class="dynamic-form-item">
+          <WorkExperienceForm :item="item" :index="index" />
+          <el-button 
+            type="danger" 
+            size="small" 
+            @click="removeWorkItem(index)"
+            class="remove-btn"
+          >
+            <el-icon>
+              <Delete />
+            </el-icon>
+          </el-button>
+        </div>
+        
+        <el-button 
+          type="primary" 
+          size="small" 
+          @click="addWorkItem"
+          class="add-btn"
+        >
+          <el-icon>
+            <Plus />
+          </el-icon>
+          添加工作经历
+        </el-button>
+
+        <!-- 项目经历 -->
+        <el-divider content-position="left">项目经历</el-divider>
+
+        <div v-for="(item, index) in infoForm.projects" :key="index" class="dynamic-form-item">
+          <ProjectForm :item="item" :index="index" />
+          <el-button 
+            type="danger" 
+            size="small" 
+            @click="removeProjectItem(index)"
+            class="remove-btn"
+          >
+            <el-icon>
+              <Delete />
+            </el-icon>
+          </el-button>
+        </div>
+        
+        <el-button 
+          type="primary" 
+          size="small" 
+          @click="addProjectItem"
+          class="add-btn"
+        >
+          <el-icon>
+            <Plus />
+          </el-icon>
+          添加项目经历
+        </el-button>
+
+        <!-- 自我评价 -->
+        <el-divider content-position="left">自我评价</el-divider>
+
+        <el-form-item label="自我评价" prop="selfEvaluation">
+          <el-input 
+            v-model="infoForm.selfEvaluation" 
+            type="textarea" 
+            :rows="4" 
+            placeholder="请简要评价自己的优势和特点，最多500字" 
+            maxlength="500"
+            show-word-limit 
+          />
+        </el-form-item>
 
         <!-- 提交按钮 -->
         <el-form-item>
@@ -189,6 +277,7 @@
     </el-card>
   </div>
 </template>
+
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
@@ -197,15 +286,18 @@ import {
   Message,
   Phone,
   Check,
+  Plus,
+  Delete
 } from '@element-plus/icons-vue'
 import type { FormInstance, FormRules } from 'element-plus'
 
 // 引入组件
 import TagSelector from './components/TagSelector.vue'
+import EducationForm from './components/EducationForm.vue'
+import WorkExperienceForm from './components/WorkExperienceForm.vue'
+import ProjectForm from './components/ProjectForm.vue'
 import { getPersonInfo, updatePersonInfo } from '@/api/person'
 import type { UserInfo } from '@/api/person'
-
-
 
 // 表单实例
 const infoFormRef = ref<FormInstance>()
@@ -213,12 +305,12 @@ const loading = ref(false)
 
 // 表单数据
 const infoForm = reactive({
-  avatar: '',
   nickname: '',
   realName: '',
+  motto: '',
+  bio: '',
   gender: '',
   birthday: '',
-  bio: '',
   email: '',
   phone: '',
   qq: '',
@@ -226,14 +318,30 @@ const infoForm = reactive({
   location: '',
   address: '',
   skills: [] as string[],
-  experience: 0,
-
   hobbies: [] as string[],
   github: '',
+  gitee: '',
   website: '',
-  education: '',
-  school: '',
-  expectedSalary: 15
+  educationHistory: [] as Array<{
+    year: string
+    school: string
+    major: string
+    degree: string
+    description?: string
+  }>,
+  workExperience: [] as Array<{
+    year: string
+    company: string
+    position: string
+    description?: string
+  }>,
+  projects: [] as Array<{
+    title: string
+    link?: string
+    tech: string[]
+    description?: string
+  }>,
+  selfEvaluation: ''
 })
 
 // 页面加载时获取个人信息
@@ -245,7 +353,7 @@ onMounted(() => {
 const fetchPersonInfo = async () => {
   try {
     loading.value = true
-    const response:any = await getPersonInfo()
+    const response: any = await getPersonInfo()
 
     if (response.code === 200 && response.data && response.data.length > 0) {
       const userData = response.data[0] // 获取第一个用户数据
@@ -253,25 +361,48 @@ const fetchPersonInfo = async () => {
       // 填充表单数据
       infoForm.nickname = userData.nickname || ''
       infoForm.realName = userData.realName || ''
+      infoForm.motto = userData.motto || ''
+      infoForm.bio = userData.bio || ''
       infoForm.gender = userData.gender || ''
       infoForm.birthday = userData.birthday || ''
-      infoForm.bio = userData.bio || ''
       infoForm.email = userData.email || ''
       infoForm.phone = userData.phone || ''
       infoForm.qq = userData.qq || ''
       infoForm.wechat = userData.wechat || ''
-      // 处理地区数据 - 直接作为字符串使用
       infoForm.location = userData.location || ''
       infoForm.address = userData.address || ''
-      infoForm.skills = userData.skills ? userData.skills.split(',').filter((skill: any) => skill.trim()) : []
-      infoForm.hobbies = userData.hobbies ? userData.hobbies.split(',').filter((hobby: any) => hobby.trim()) : []
+      infoForm.skills = Array.isArray(userData.skills) ? userData.skills : []
+      infoForm.hobbies = Array.isArray(userData.hobbies) ? userData.hobbies : []
       infoForm.github = userData.github || ''
+      infoForm.gitee = userData.gitee || ''
       infoForm.website = userData.website ? userData.website.replace('https://', '') : ''
-      infoForm.education = userData.education || ''
-      infoForm.school = userData.school || ''
+      infoForm.educationHistory = userData.educationHistory || []
+      infoForm.workExperience = userData.workExperience || []
+      infoForm.projects = userData.projects || []
+      infoForm.selfEvaluation = userData.selfEvaluation || ''
+
+      // 如果教育经历为空，添加一条空记录
+      if (infoForm.educationHistory.length === 0) {
+        addEducationItem()
+      }
+      
+      // 如果工作经历为空，添加一条空记录
+      if (infoForm.workExperience.length === 0) {
+        addWorkItem()
+      }
+      
+      // 如果项目经历为空，添加一条空记录
+      if (infoForm.projects.length === 0) {
+        addProjectItem()
+      }
+
       ElMessage.success('个人信息加载成功')
     } else {
       ElMessage.warning('暂无个人信息，请填写表单')
+      // 添加空记录
+      addEducationItem()
+      addWorkItem()
+      addProjectItem()
     }
   } catch (error) {
     console.error('获取个人信息失败:', error)
@@ -304,6 +435,12 @@ const rules: FormRules = {
   ],
   bio: [
     { max: 200, message: '最多200个字符', trigger: 'blur' }
+  ],
+  motto: [
+    { max: 50, message: '最多50个字符', trigger: 'blur' }
+  ],
+  selfEvaluation: [
+    { max: 500, message: '最多500个字符', trigger: 'blur' }
   ]
 }
 
@@ -323,10 +460,64 @@ const hobbyOptions = [
   '登山', '滑雪', '骑行', '露营', '钓鱼', '园艺'
 ]
 
-
 // 禁用未来日期
 const disabledBirthday = (time: Date): boolean => {
   return time.getTime() > Date.now()
+}
+
+// 教育经历操作
+const addEducationItem = () => {
+  infoForm.educationHistory.push({
+    year: '',
+    school: '',
+    major: '',
+    degree: '',
+    description: ''
+  })
+}
+
+const removeEducationItem = (index: number) => {
+  if (infoForm.educationHistory.length > 1) {
+    infoForm.educationHistory.splice(index, 1)
+  } else {
+    ElMessage.warning('至少需要保留一条教育经历')
+  }
+}
+
+// 工作经历操作
+const addWorkItem = () => {
+  infoForm.workExperience.push({
+    year: '',
+    company: '',
+    position: '',
+    description: ''
+  })
+}
+
+const removeWorkItem = (index: number) => {
+  if (infoForm.workExperience.length > 1) {
+    infoForm.workExperience.splice(index, 1)
+  } else {
+    ElMessage.warning('至少需要保留一条工作经历')
+  }
+}
+
+// 项目经历操作
+const addProjectItem = () => {
+  infoForm.projects.push({
+    title: '',
+    link: '',
+    tech: [],
+    description: ''
+  })
+}
+
+const removeProjectItem = (index: number) => {
+  if (infoForm.projects.length > 1) {
+    infoForm.projects.splice(index, 1)
+  } else {
+    ElMessage.warning('至少需要保留一条项目经历')
+  }
 }
 
 // 提交表单
@@ -343,21 +534,25 @@ const submitForm = async (): Promise<void> => {
           id: 1, // 默认用户ID
           nickname: infoForm.nickname,
           realName: infoForm.realName,
+          motto: infoForm.motto,
+          bio: infoForm.bio,
           gender: infoForm.gender,
           birthday: infoForm.birthday,
-          bio: infoForm.bio,
           email: infoForm.email,
           phone: infoForm.phone,
           qq: infoForm.qq,
           wechat: infoForm.wechat,
           location: infoForm.location || '',
           address: infoForm.address,
-          skills: infoForm.skills.join(','),
-          hobbies: infoForm.hobbies.join(','),
+          skills: infoForm.skills,
+          hobbies: infoForm.hobbies,
           github: infoForm.github,
+          gitee: infoForm.gitee,
           website: infoForm.website ? `https://${infoForm.website}` : '',
-          education: infoForm.education,
-          school: infoForm.school
+          educationHistory: infoForm.educationHistory,
+          workExperience: infoForm.workExperience,
+          projects: infoForm.projects,
+          selfEvaluation: infoForm.selfEvaluation
         }
 
         const response: any = await updatePersonInfo(submitData)
@@ -378,6 +573,7 @@ const submitForm = async (): Promise<void> => {
   })
 }
 </script>
+
 <style scoped>
 .info-container {
   background-color: #f5f5f5;
@@ -457,6 +653,26 @@ const submitForm = async (): Promise<void> => {
   font-weight: 500;
 }
 
+/* 动态表单样式 */
+.dynamic-form-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.dynamic-form-item > :first-child {
+  flex: 1;
+}
+
+.remove-btn {
+  margin-top: 2px;
+}
+
+.add-btn {
+  margin-bottom: 24px;
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
   .info-container {
@@ -503,6 +719,15 @@ const submitForm = async (): Promise<void> => {
 
   :deep(.el-form-item__label) {
     text-align: left;
+  }
+
+  .dynamic-form-item {
+    flex-direction: column;
+  }
+
+  .remove-btn {
+    align-self: flex-end;
+    margin-top: -8px;
   }
 }
 </style>

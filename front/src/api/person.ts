@@ -6,9 +6,10 @@ export interface UserInfo {
   id: number
   nickname?: string
   realName?: string
+  motto?: string
+  bio?: string
   gender?: '男' | '女' | string
   birthday?: string // 格式为YYYY-MM-DD
-  bio?: string
 
   // 联系方式
   email?: string
@@ -20,28 +21,52 @@ export interface UserInfo {
   location?: string
   address?: string
 
-  // 专业技能（逗号分隔的字符串）
-  skills?: string
+  // 专业技能（数组或逗号分隔的字符串）
+  skills?: string | string[]
 
-  // 工作经历（JSON字符串或解析后的数组）
-  workExperience?:
-    | string
-    | Array<{
-        company: string
-        position: string
-        duration: string
-      }>
-
-  // 兴趣爱好（逗号分隔的字符串）
-  hobbies?: string
+  // 兴趣爱好（数组或逗号分隔的字符串）
+  hobbies?: string | string[]
 
   // 社交媒体
   github?: string
+  gitee?: string
   website?: string
 
-  // 扩展信息
-  education?: string
-  school?: string
+  // 教育背景（简化字段）
+  degreeSimple?: string
+  schoolSimple?: string
+
+  // 教育历史（数组）
+  educationHistory?: Array<{
+    year: string
+    major: string
+    degree: string
+    school: string
+    description?: string
+  }>
+
+  // 工作经历（数组）
+  workExperience?: Array<{
+    year: string
+    company: string
+    position: string
+    description?: string
+  }>
+
+  // 项目经历（数组）
+  projects?: Array<{
+    title: string
+    link?: string
+    tech?: string[]
+    description?: string
+  }>
+
+  // 自我评价
+  selfEvaluation?: string
+
+  // 时间戳
+  createdAt?: string
+  updatedAt?: string
 }
 
 // 获取个人信息
