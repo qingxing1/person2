@@ -108,20 +108,20 @@ export function getBlogTagList(): Promise<{ code: number; data: TagItem[]; messa
 
 // 更新博客配置参数类型
 // 单个分类或标签的结构
-interface CategoryItem {
+export interface CategoryItem {
   id: string;
   name: string;
   slug: string;
 }
 
-interface TagItem {
+export interface TagItem {
   id: string;
   name: string;
   slug: string;
 }
 
 // 整体响应结构
-interface BlogMetadataResponse {
+export interface BlogMetadataResponse {
   categories: CategoryItem[];
   tags: TagItem[];
 }
