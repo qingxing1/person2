@@ -1,6 +1,9 @@
 import { useState, useCallback, useMemo } from "react";
 import { cn } from "@/lib/utils";
-import type { Category, Tag } from "@/config/boke.config";
+
+// 本地定义类型，避免依赖已删除的配置文件
+interface Category { id: string; name: string; slug: string; count?: number }
+interface Tag { id: string; name: string; slug: string; count?: number }
 
 const STORAGE_KEY = "blog-sidebar-preference";
 
@@ -118,7 +121,7 @@ function CategoryList({
         >
           全部分类
         </button>
-        {categories.map((category, index) => (
+        {Array.isArray(categories) && categories.map((category, index) => (
           <button
             key={category.slug}
             onClick={() => onSelectCategory(category.name)}
@@ -170,7 +173,7 @@ function TagCloud({
         >
           全部标签
         </button>
-        {tags.map((tag, index) => (
+        {Array.isArray(tags) && tags.map((tag, index) => (
           <button
             key={tag.slug}
             onClick={() => onSelectTag(tag.name)}

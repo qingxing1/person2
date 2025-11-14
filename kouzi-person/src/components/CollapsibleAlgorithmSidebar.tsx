@@ -161,7 +161,7 @@ function CategoryFilter({
         >
           全部类别
         </button>
-        {categories.map((category, index) => (
+        {Array.isArray(categories) && categories.map((category, index) => (
           <button
             key={category.id}
             onClick={() => onSelectCategory(category.name)}

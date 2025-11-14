@@ -27,6 +27,12 @@ interface Item {
 type BlogCategory = Item[];
 type BlogTag = Item[];
 
+interface ApiResponse<T> {
+  code: number;
+  msg: string;
+  data: T;
+}
+
 
 // 获取博客列表
 export async function getBokeList(query: BlogQueryParams) {
@@ -39,12 +45,12 @@ export async function getBokeDetail(id: number) {
 }
 
 // 获取博客分类
-export async function getBokeCategory(): Promise<BlogCategory> {
+export async function getBokeCategory(): Promise<ApiResponse<BlogCategory>> {
   return get("/blog/config/categories");
 } 
 
 // 获取博客标签
-export async function getBokeTag(): Promise<BlogTag> {
+export async function getBokeTag(): Promise<ApiResponse<BlogTag>> {
   return get("/blog/config/tags");
 }
 

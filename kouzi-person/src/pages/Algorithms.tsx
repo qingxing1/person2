@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
-import { getMethodList } from "@/services/method";
+import { getMethodList, getMethodCategory} from "@/services/method";
 import { cn } from "@/lib/utils";
-import { methodConfig } from "@/config/method.config";
 import { extractTextFromMarkdown } from "@/utils/text-handle";
 import CollapsibleAlgorithmSidebar from "@/components/CollapsibleAlgorithmSidebar";
 
@@ -90,10 +89,10 @@ function AlgorithmCard({ algorithm }: { algorithm: any }) {
 export default function Algorithms() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [algorithms, setAlgorithms] = useState<any[]>([]);
-  // 类别从配置文件中获取
+  // 类别由后端接口获取
   const [categories, setCategories] = useState<
     Array<{ id: string; name: string; slug: string }>
-  >(methodConfig.categories);
+  >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
@@ -123,7 +122,7 @@ export default function Algorithms() {
         if (response.code === 200 && response.data) {
           const list = response.data as any[];
           setAlgorithms((prev) => (replace ? list : [...prev, ...list]));
-          setCategories(methodConfig.categories);
+          // 保持已加载的类别数据，不在加载列表时重置类别
           setHasMore(Array.isArray(list) ? list.length >= limit : false);
           setPage(targetPage);
         } else {
@@ -138,6 +137,22 @@ export default function Algorithms() {
     },
     [searchQuery, activeDifficulty, activeCategory, limit]
   );
+   
+  // 获取算法类别
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await getMethodCategory();
+        const { code, data } = res as { code: number; data: Array<{ id: string; name: string; slug: string }>; };
+        if (code === 200 && Array.isArray(data)) {
+          setCategories(data);
+        }
+      } catch (e) {
+        // 保持默认配置类别作为回退
+      }
+    };
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     // 筛选变化时重置到第一页

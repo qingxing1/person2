@@ -1,8 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { getBokeList } from '@/services/boke';
+import { getBokeCategory, getBokeTag } from '@/services/boke';
+
 import { cn } from '@/lib/utils';
-import { bokeConfig, type Category, type Tag } from '@/config/boke.config';
+type Category = { id: string; name: string; slug: string; count?: number };
+type Tag = { id: string; name: string; slug: string; count?: number };
 import { extractTextFromMarkdown } from '@/utils/text-handle';
 import CollapsibleSidebar from '@/components/CollapsibleSidebar';
 
@@ -90,11 +93,12 @@ function BlogCard({ post }: { post: any }) {
   );
 }
 
-
-
 export default function Blog() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [posts, setPosts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
+
   const [activeCategory, setActiveCategory] = useState(searchParams.get('category') || '');
   const [activeTag, setActiveTag] = useState(searchParams.get('tag') || '');
   const [searchQuery, setSearchQuery] = useState(searchParams.get('title') || '');
@@ -104,25 +108,49 @@ export default function Blog() {
   const [size] = useState(20);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  
+
+  // 获取分类与标签（简单形态：接口直接返回数组）
+  useEffect(() => {
+    const fetchMeta = async () => {
+      try {
+        const [catRes, tagRes] = await Promise.all([
+          getBokeCategory(),
+          getBokeTag(),
+        ]);
+        const cat = catRes as { code: number; data: Category[] };
+        const tag = tagRes as { code: number; data: Tag[] };
+        const dedupeBySlug = <T extends { slug: string }>(arr: T[]) =>
+          Array.from(new Map(arr.map((i) => [i.slug, i])).values());
+        if (cat.code === 200 && Array.isArray(cat.data)) {
+          setCategories(dedupeBySlug(cat.data));
+        }
+        if (tag.code === 200 && Array.isArray(tag.data)) {
+          setTags(dedupeBySlug(tag.data));
+        }
+      } catch {}
+    };
+    fetchMeta();
+  }, []);
+
   useEffect(() => {
     const category = searchParams.get('category') || '';
     const tag = searchParams.get('tag') || '';
     const title = searchParams.get('title') || '';
-    
-    // 如果 category 是 slug，转换为中文名用于显示
-    const categoryName = bokeConfig.categories.find(c => c.slug === category)?.name || category;
-    const tagName = bokeConfig.tags.find(t => t.slug === tag)?.name || tag;
-    
+
+    // 如果是 slug，转换为中文名用于显示
+    const categoryName = categories.find(c => c.slug === category)?.name || category;
+    const tagName = tags.find(t => t.slug === tag)?.name || tag;
+
     setActiveCategory(categoryName);
     setActiveTag(tagName);
     setSearchQuery(title);
+
     // 重置到第一页并加载
     setPage(1);
     setHasMore(true);
     loadPage(1, true, { category: categoryName, tag: tagName, title });
-  }, [searchParams]);
-  
+  }, [searchParams, categories, tags]);
+
   const loadPage = useCallback(
     async (
       targetPage: number,
@@ -160,7 +188,7 @@ export default function Blog() {
     },
     [size]
   );
-  
+
   // 防抖搜索 - 1秒防抖
   const handleSearch = useCallback((searchTerm: string) => {
     setSearchParams(prev => {
@@ -187,22 +215,22 @@ export default function Blog() {
     if (searchQuery) {
       return `搜索: "${searchQuery}"`;
     }
-    
+
     if (activeCategory) {
       return `分类: ${activeCategory}`;
     }
-    
+
     if (activeTag) {
       return `标签: ${activeTag}`;
     }
-    
+
     return '全部博客文章';
   };
 
   // 筛选文章
   const filteredPosts = posts.filter(post => {
     if (activeCategory && post.category !== activeCategory) return false;
- if (activeTag && (!post.tags || !post.tags.includes(activeTag))) return false;
+    if (activeTag && (!post.tags || !post.tags.includes(activeTag))) return false;
     return true;
   });
 
@@ -210,7 +238,7 @@ export default function Blog() {
   const handleCategoryFilter = (category: string) => {
     const params = new URLSearchParams(searchParams);
     if (category) {
-      const categorySlug = bokeConfig.categories.find(c => c.name === category)?.slug || category;
+      const categorySlug = categories.find(c => c.name === category)?.slug || category;
       params.set('category', categorySlug);
     } else {
       params.delete('category');
@@ -221,7 +249,7 @@ export default function Blog() {
   const handleTagFilter = (tag: string) => {
     const params = new URLSearchParams(searchParams);
     if (tag) {
-      const tagSlug = bokeConfig.tags.find(t => t.name === tag)?.slug || tag;
+      const tagSlug = tags.find(t => t.name === tag)?.slug || tag;
       params.set('tag', tagSlug);
     } else {
       params.delete('tag');
@@ -233,13 +261,13 @@ export default function Blog() {
   const clearFilters = () => {
     setSearchParams(new URLSearchParams());
   };
-  
+
   return (
     <div className="blog-page">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">{getFilterTitle()}</h1>
         <p className="text-gray-600 dark:text-gray-400">
-        记录开发思路的文字分享
+          记录开发思路的文字分享
         </p>
         {(activeCategory || activeTag) && (
           <div className="mt-2">
@@ -252,69 +280,69 @@ export default function Blog() {
           </div>
         )}
         {/* 搜索框 */}
-          <div className="relative mt-6">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="搜索博客文章..."
-                value={searchQuery}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setSearchQuery(value);
-                  debouncedSearch(value);
-                }}
-                className="w-full px-4 py-3 pl-12 pr-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:outline-none transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-500"
-              />
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <svg
-                  className="h-5 w-5 text-gray-400 dark:text-gray-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-              </div>
-              {searchQuery && (
-                <button
-                  onClick={() => {
-                    setSearchQuery('');
-                    debouncedSearch('');
-                  }}
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                >
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              )}
+        <div className="relative mt-6">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="搜索博客文章..."
+              value={searchQuery}
+              onChange={(e) => {
+                const value = e.target.value;
+                setSearchQuery(value);
+                debouncedSearch(value);
+              }}
+              className="w-full px-4 py-3 pl-12 pr-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:outline-none transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-500"
+            />
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <svg
+                className="h-5 w-5 text-gray-400 dark:text-gray-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
             </div>
             {searchQuery && (
-              <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                正在搜索... <span className="animate-pulse">|</span>
-              </div>
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  debouncedSearch('');
+                }}
+                className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             )}
           </div>
+          {searchQuery && (
+            <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+              正在搜索... <span className="animate-pulse">|</span>
+            </div>
+          )}
+        </div>
       </div>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* 侧边栏 - 可折叠的分类和标签 */}
         <div className="lg:col-span-1 space-y-6">
           <CollapsibleSidebar
-            categories={bokeConfig.categories}
-            tags={bokeConfig.tags}
+            categories={categories}
+            tags={tags}
             activeCategory={activeCategory}
             activeTag={activeTag}
             onSelectCategory={handleCategoryFilter}
             onSelectTag={handleTagFilter}
           />
         </div>
-        
+
         {/* 主内容区 - 博客文章列表 */}
         <div className="lg:col-span-3">
           {loading && (

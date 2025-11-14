@@ -10,13 +10,18 @@ interface Query {
 
 // 算法分类接口响应类型
 interface Item {
-  id: number;
+  id: string;
   name: string;
   slug: string;
 }
 
 type  MethodList = Item[];
 
+interface ApiResponse<T> {
+  code: number;
+  msg: string;
+  data: T;
+}
 
 // 获取方法列表
 export async function getMethodList(query?:Query) {
@@ -24,11 +29,11 @@ export async function getMethodList(query?:Query) {
 }
 
 // 获取方法详情
-export async function getMethodDetail(id: number) {
+export async function getMethodDetail(id: string) {
   return get(`/method/${id}`);
 }
 
 // 获取方法分类
-export async function getMethodCategory(): Promise<MethodList> {
+export async function getMethodCategory(): Promise<ApiResponse<MethodList>> {
   return get('algorithm/problem/config/categories');
 }
