@@ -16,6 +16,18 @@ interface BlogQueryParams {
   size?: string;
 }
 
+// 单个分类的结构
+interface Item {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+// 接口响应通常是数组，所以你可以这样使用：
+type BlogCategory = Item[];
+type BlogTag = Item[];
+
+
 // 获取博客列表
 export async function getBokeList(query: BlogQueryParams) {
   return get("/blog/list", { params: query });
@@ -25,3 +37,14 @@ export async function getBokeList(query: BlogQueryParams) {
 export async function getBokeDetail(id: number) {
   return get(`/blog/${id}`);
 }
+
+// 获取博客分类
+export async function getBokeCategory(): Promise<BlogCategory> {
+  return get("/blog/config/categories");
+} 
+
+// 获取博客标签
+export async function getBokeTag(): Promise<BlogTag> {
+  return get("/blog/config/tags");
+}
+

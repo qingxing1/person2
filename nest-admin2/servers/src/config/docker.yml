@@ -45,7 +45,7 @@ jwt:
 # 权限 白名单配置
 perm:
   router:
-    whitelist: 
+    whitelist:
       - { path: '/api/register', method: 'POST' }
       - { path: '/api/login', method: 'POST' }
       - { path: '/api/perm/{id}', method: 'GET' }
@@ -53,6 +53,11 @@ perm:
       - { path: '/api/personal', method: 'GET' }
       - { path: '/api/method/list', method: 'GET' }
       - { path: '/api/blog/list', method: 'GET' }
+      - { path: '/api/blog/config', method: 'GET' }
+      - { path: '/api/blog/config/categories', method: 'GET' }
+      - { path: '/api/blog/config/tags', method: 'GET' }
+      - { path: '/api/algorithm/problem/config', method: 'GET' }
+      - { path: '/api/algorithm/problem/config/categories', method: 'GET' }
       - { path: '/api/message', method: 'POST' }
       - { path: '/api/visit-stats/increment', method: 'POST' }
       - { path: '/api/user/one/info', method: 'GET' }
