@@ -78,7 +78,7 @@ import type { UploadProps } from 'element-plus'
 import { Picture } from '@element-plus/icons-vue'
 import type { FormRules } from 'element-plus'
 import type { Blog, BlogFormData } from '../types/blog'
-import { addBlog, updateBlog, uploadCoverImage, uploadContentImage, getBlogDetail } from '@/api/boke'
+import { addBlog, updateBlog, uploadCoverImage, uploadContentImage, getBlogDetail, getBlogCategoryList, getBlogTagList } from '@/api/boke'
 import emitter from '@/utils/mitt'
 import { useTheme } from '@/hooks/useTheme'
 
@@ -104,16 +104,31 @@ const emit = defineEmits<{
 }>()
 
 // 标签选项
-const availableTags = ref([
-  'React', 'TypeScript', 'JavaScript', 'CSS', 'Node.js',
-  '性能优化', 'Webpack', 'Vite', '测试', '状态管理'
-])
+const availableTags = ref<string[]>([])
 
 // 分类选项
-const availableCategories = ref([
-  '前端', '后端', '全栈', '移动开发', '数据库',
-  '运维', '安全', '项目管理', '其他'
-])
+const availableCategories = ref<string[]>([])
+
+// 加载元数据（分类和标签）
+const loadMetadata = async () => {
+  try {
+    const [categoryRes, tagRes] = await Promise.all([
+      getBlogCategoryList(),
+      getBlogTagList()
+    ])
+
+    if (categoryRes?.code === 200) {
+      availableCategories.value = (categoryRes.data || []).map((item: any) => item.name)
+    }
+
+    if (tagRes?.code === 200) {
+      availableTags.value = (tagRes.data || []).map((item: any) => item.name)
+    }
+  } catch (error) {
+    console.error('加载元数据失败:', error)
+    ElMessage.error('加载分类标签数据失败')
+  }
+}
 
 const formRef = ref()
 const submitting = ref(false)
@@ -364,6 +379,9 @@ watch(() => props.isEdit, (newIsEdit) => {
 
 // 确保组件挂载后立即检查当前状态
 onMounted(() => {
+  // 加载分类和标签数据
+  loadMetadata()
+  
   if (props.visible && props.isEdit && props.currentBlogId) {
     getBlogDetailById(props.currentBlogId)
   } else if (props.visible && !props.isEdit) {

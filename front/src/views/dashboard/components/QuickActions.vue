@@ -11,7 +11,7 @@
         @click="$emit('action-click', action.key)"
       >
         <el-icon>
-          <component :is="action.icon" />
+          <component :is="getIconComponent(action.icon)" />
         </el-icon>
         <span>{{ action.label }}</span>
       </div>
@@ -20,10 +20,12 @@
 </template>
 
 <script lang="ts" setup>
+import { markRaw } from 'vue'
+
 interface QuickAction {
   key: string
   label: string
-  icon: string
+  icon: any
 }
 
 interface Props {
@@ -34,6 +36,11 @@ const props = defineProps<Props>()
 const emit = defineEmits<{
   'action-click': [key: string]
 }>()
+
+// 处理图标组件，避免被转换为响应式对象
+const getIconComponent = (icon: any) => {
+  return typeof icon === 'object' ? markRaw(icon) : icon
+}
 </script>
 
 <style lang="scss" scoped>

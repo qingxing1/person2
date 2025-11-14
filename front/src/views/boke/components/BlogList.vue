@@ -76,7 +76,7 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 
 import { Plus } from '@element-plus/icons-vue'
-import { getBlogList, deleteBlog } from '@/api/boke'
+import { getBlogList, deleteBlog, getBlogCategoryList } from '@/api/boke'
 import { ElMessage } from 'element-plus'
 import type { Blog } from '../types/blog'
 import emitter from '@/utils/mitt';
@@ -89,10 +89,19 @@ const props = defineProps<{
 // 记录总条数
 const total = ref(0)
 // 分类选项
-const availableCategories = ref([
-  '前端', '后端', '全栈', '移动开发', '数据库',
-  '运维', '安全', '项目管理', '其他'
-])
+const availableCategories = ref<string[]>([])
+
+// 加载分类列表
+const loadCategories = async () => {
+  try {
+    const res = await getBlogCategoryList()
+    if (res?.code === 200) {
+      availableCategories.value = (res.data || []).map((item: any) => item.name)
+    }
+  } catch (error) {
+    console.error('加载分类列表失败:', error)
+  }
+}
 
 const emit = defineEmits<{
   view: [blog: Blog],
@@ -188,6 +197,8 @@ watch([currentPage, pageSize], () => {
 })
 
 onMounted(() => {
+  // 加载分类数据
+  loadCategories()
   // 初始化获取博客列表
   getBokeList()
   // 监听刷新事件
