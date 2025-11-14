@@ -4,10 +4,12 @@
   </div>
 </template>
 
-<script>
-export default {
-
-}
+<script setup>
+// 在页面挂载的时候触发路由回退一级
+onMounted(() => {
+  // 路由跳转到首页
+  router.go(-1)
+})
 </script>
 
 <style>

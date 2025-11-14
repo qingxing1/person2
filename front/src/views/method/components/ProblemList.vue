@@ -58,11 +58,11 @@
 import { Plus } from '@element-plus/icons-vue'
 
 interface Problem {
-  id: number
+  id: string
   title: string
   difficulty: '简单' | '中等' | '困难'
   category: string
-  createdAt: string
+  createdAt?: string
   description?: string
   solution?: string
   answer?: string
@@ -87,18 +87,18 @@ const emit = defineEmits<{
   'add-problem': []
   'view-details': [problem: Problem]
   'edit-problem': [problem: Problem]
-  'delete-problem': [id: number]
+  'delete-problem': [id: string]
   'page-change': [page: number]
   'update:page-size': [size: number]
 }>()
 
 const getDifficultyType = (difficulty: string) => {
   const map = {
-    '简单': 'success',
-    '中等': 'warning',
-    '困难': 'danger'
+    '简单': 'success' as const,
+    '中等': 'warning' as const,
+    '困难': 'danger' as const
   }
-  return map[difficulty as keyof typeof map] || 'info'
+  return map[difficulty as keyof typeof map] || 'info' as const
 }
 
 const formatDate = (date: string) => {

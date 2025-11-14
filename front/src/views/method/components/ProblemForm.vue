@@ -70,7 +70,7 @@ import type { FormInstance, FormRules } from 'element-plus'
 import type { Category } from '@/api/method'
 
 interface Problem {
-  id?: number
+  id?: string
   title: string
   difficulty: '简单' | '中等' | '困难'
   category: string
@@ -120,8 +120,8 @@ const isDark = computed(() => {
 
 // 初始化表单数据，只保留需要的字段
 const initForm = () => {
-  const { updatedAt, createdAt, ...rest } = props.modelValue || {}
-  // 只保留需要的字段，移除时间字段
+  const rest = props.modelValue || {}
+  // 只保留需要的字段
   const { id, title, difficulty, category, description, solution, answer } = rest
   form.value = {
     id,
@@ -154,8 +154,7 @@ const rules: FormRules = {
 
 watch(() => props.modelValue, (newVal) => {
   if (newVal) {
-    const { updatedAt, createdAt, ...rest } = newVal
-    form.value = { ...rest }
+    form.value = { ...newVal }
   }
 }, { deep: true })
 
@@ -163,7 +162,7 @@ const submitForm = async () => {
   if (!formRef.value) return
 
   await formRef.value.validate((valid) => {
-    if (valid) {
+    if (valid && form.value) {
       emit('submit', form.value)
     }
   })

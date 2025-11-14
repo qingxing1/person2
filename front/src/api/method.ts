@@ -76,3 +76,29 @@ export function deleteMethod(id: string) {
   })
 }
 
+// 获取算法分类
+export function getMethodCategoryList() {
+  return request({
+    url: '/algorithm/problem/config/categories',
+    method: ApiMethodContants.GET,
+  })
+}
+
+// 算法配置传递参数
+export interface Item{
+  id: string
+  name: string
+  slug: string
+}
+export interface MethodConfig {
+  categories: Item[]
+}
+// 更新算法配置
+export function updateMethodConfig(data: MethodConfig) {
+  return request({
+    url: '/algorithm/problem/config',
+    method: ApiMethodContants.PUT,
+    data
+  })
+}
+

@@ -45,12 +45,18 @@ export const asyncRoutes: RouteRecordRaw[] = [
     path: '/boke',
     component: shallowRef(Layout),
     redirect: '/boke/info',
+    meta: { title: '博客', icon: 'permission' },
     children: [
       {
         path: '/boke/info',
         name: 'boke_info',
         component: () => import('@/views/boke/index.vue'),
-        meta: { title: '博客管理', icon: 'boke' }
+        meta: { title: '博客列表', icon: 'boke' }
+      },{
+        path: '/boke/tag',
+        name: 'boke_manage',
+        component: () => import('@/views/boke/BokeManage.vue'),
+        meta: { title: '标签管理', icon: 'boke' }
       }
     ]
   },
@@ -58,12 +64,19 @@ export const asyncRoutes: RouteRecordRaw[] = [
     path: '/method',
     component: shallowRef(Layout),
     redirect: '/method/info',
+    meta: { title: '算法', icon: 'computed' },
     children: [
       {
         path: '/method/info',
         name: 'method_info',
         component: () => import('@/views/method/index.vue'),
         meta: { title: '算法集合', icon: 'computed' }
+      },
+      {
+        path: '/method/manage',
+        name: 'method_manage',
+        component: () => import('@/views/method/MethodManage.vue'),
+        meta: { title: '题集设置', icon: 'computed' }
       }
     ]
   },

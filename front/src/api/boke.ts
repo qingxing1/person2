@@ -90,4 +90,47 @@ export function uploadContentImage(file: File) {
   })
 }
 
+// 获取博客分类列表
+export function getBlogCategoryList(): Promise<{ code: number; data: CategoryItem[]; message: string }> {
+  return request({
+    url: '/blog/config/categories',
+    method: ApiMethodContants.GET
+  })
+}
+
+// 获取博客标签列表
+export function getBlogTagList(): Promise<{ code: number; data: TagItem[]; message: string }> {
+  return request({
+    url: '/blog/config/tags',
+    method: ApiMethodContants.GET
+  })
+}
+
+// 更新博客配置参数类型
+// 单个分类或标签的结构
+interface CategoryItem {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+interface TagItem {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+// 整体响应结构
+interface BlogMetadataResponse {
+  categories: CategoryItem[];
+  tags: TagItem[];
+}
+// 更新博客配置
+export function updateBlogConfig(data: BlogMetadataResponse): Promise<{ code: number; data: any; message: string }> {
+  return request({
+    url: '/blog/config',
+    method: ApiMethodContants.PUT,
+    data
+  })
+}
 

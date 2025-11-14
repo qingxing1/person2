@@ -81,14 +81,14 @@ import 'md-editor-v3/lib/preview.css'
 import type { Category } from '@/api/method'
 
 interface Problem {
-  id: number
+  id: string
   title: string
   difficulty: '简单' | '中等' | '困难'
-  category: Category
+  category: string
   description?: string
   solution?: string
   answer?: string
-  createdAt: string
+  createdAt?: string
 }
 
 interface Props {
@@ -113,11 +113,11 @@ const isDark = computed(() => {
 
 const getDifficultyType = (difficulty: string) => {
   const map = {
-    '简单': 'success',
-    '中等': 'warning',
-    '困难': 'danger'
+    '简单': 'success' as const,
+    '中等': 'warning' as const,
+    '困难': 'danger' as const
   }
-  return map[difficulty as keyof typeof map] || 'info'
+  return map[difficulty as keyof typeof map] || 'info' as const
 }
 </script>
 

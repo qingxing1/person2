@@ -129,7 +129,7 @@ import { Grid, Search, Refresh } from '@element-plus/icons-vue'
 import ProblemList from './components/ProblemList.vue'
 import ProblemDetail from './components/ProblemDetail.vue'
 import ProblemForm from './components/ProblemForm.vue'
-import { getMethodList, deleteMethod, addMethod, updateMethod } from '@/api/method'
+import { getMethodList, deleteMethod, addMethod, updateMethod, getMethodCategoryList } from '@/api/method'
 import type { Category } from '@/api/method'
 
 
@@ -142,10 +142,10 @@ interface Problem {
   description?: string
   solution?: string
   answer?: string
-  createdAt: string
-  updatedAt: string
+  createdAt?: string
+  updatedAt?: string
 }
-const CATEGORY: Category[] = ['数组', '字符串', '链表', '树', '哈希表', '动态规划', '贪心', '回溯', '排序', '查找']
+const CATEGORY = ref<Category[]>([])
 // 状态管理
 const problems = ref<Problem[]>([])
 const loading = ref(false)
@@ -403,7 +403,21 @@ const initMethodList = async () => {
 onMounted(() => {
   // loadProblems()
   initMethodList()
+  loadCategories()
 })
+
+// 加载分类列表
+const loadCategories = async () => {
+  try {
+    const res:any = await getMethodCategoryList()
+    if (res.code === 200) {
+      CATEGORY.value = (res.data || []).map((item: any) => item.name)
+    }
+  } catch (error) {
+    console.error('加载分类列表失败:', error)
+    ElMessage.error('加载分类列表失败')
+  }
+}
 
 // 组件卸载时清理定时器
 onUnmounted(() => {
