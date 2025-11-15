@@ -76,7 +76,7 @@ export const asyncRoutes: RouteRecordRaw[] = [
         path: '/method/manage',
         name: 'method_manage',
         component: () => import('@/views/method/MethodManage.vue'),
-        meta: { title: '题集设置', icon: 'computed' }
+        meta: { title: '分类设置', icon: 'computed' }
       }
     ]
   },
@@ -166,7 +166,7 @@ export const asyncRoutes: RouteRecordRaw[] = [
     name: 'front',
     beforeEnter() {
       // 跳转到外部地址
-      window.location.href = 'http://115.190.32.31:6997/'
+      window.location.href = 'http://qiao252423.top'
     },
     component: () => import('@/views/front/index.vue'), // 需要提供一个组件，但实际不会被渲染
     meta: { title: '前端展示', icon: 'front' }

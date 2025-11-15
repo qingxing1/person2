@@ -16,17 +16,20 @@ app:
 # 数据库配置
 db:
   mysql:
-    host: 'localhost'
-    username: 'root'
-    password: '123456'
+    # host: 'localhost'
+    host: '115.190.32.31'
+    username: 'qiao'
+    password: 'Qiao@123456'
+    # username: 'root'
+    # password: '0b3bf6af5250fc69A!'
     database: 'kapok'
     port: 3306
     charset: 'utf8mb4'
-    logger: 'advanced-console'
-    logging: true
+    logger: false  # 生产环境关闭详细日志
+    logging: false
     multipleStatements: true
     dropSchema: false
-    synchronize: false
+    synchronize: false  # 生产环境关闭自动同步
     supportBigNumbers: true
     bigNumberStrings: true
 
