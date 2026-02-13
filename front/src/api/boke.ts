@@ -146,3 +146,19 @@ export function uploadMarkdownFile(formData: FormData) {
   })
 }
 
+// 批量上传Markdown文件
+export function batchUploadMarkdownFiles(formData: FormData) {
+  return request({
+    url: '/blog/batch-upload/markdown',
+    method: ApiMethodContants.POST,
+    data: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  }).catch(error => {
+    // 捕获并处理错误
+    console.error('批量上传请求失败:', error);
+    throw error; // 重新抛出错误，让调用方处理
+  });
+}
+

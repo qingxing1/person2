@@ -15,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { Express } from 'express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery, ApiConsumes, ApiBody } from '@nestjs/swagger';
-import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor, AnyFilesInterceptor } from '@nestjs/platform-express';
 import * as path from 'path';
 
 import { ApiResult } from '../../common/decorators/api-result.decorator';
@@ -172,7 +172,7 @@ export class BlogController {
       const allowedTypes = ['text/plain', 'text/markdown', 'text/x-markdown', 'application/octet-stream'];
       const allowedExtensions = ['.md', '.markdown'];
       const fileExtension = path.extname(file.originalname).toLowerCase();
-      
+
       if (!allowedTypes.includes(file.mimetype) && !allowedExtensions.includes(fileExtension)) {
         return callback(new Error('只允许上传Markdown文件'), false);
       }
@@ -183,5 +183,43 @@ export class BlogController {
   @ApiResult()
   async uploadMarkdown(@UploadedFile() file: Express.Multer.File): Promise<ResultData> {
     return this.blogService.uploadMarkdown(file);
+  }
+
+  @Post('batch-upload/markdown')
+  @ApiOperation({ summary: '批量上传Markdown文件' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        files: {
+          type: 'array',
+          items: {
+            type: 'string',
+            format: 'binary'
+          },
+          description: 'Markdown文件列表'
+        }
+      }
+    }
+  })
+  @HttpCode(200)
+  @UseInterceptors(AnyFilesInterceptor({ // 使用AnyFilesInterceptor接受任何字段名的文件
+    fileFilter: (req, file, callback) => {
+      const allowedTypes = ['text/plain', 'text/markdown', 'text/x-markdown', 'application/octet-stream'];
+      const allowedExtensions = ['.md', '.markdown'];
+      const fileExtension = path.extname(file.originalname).toLowerCase();
+
+      if (!allowedTypes.includes(file.mimetype) && !allowedExtensions.includes(fileExtension)) {
+        return callback(new Error('只允许上传Markdown文件'), false);
+      }
+      callback(null, true);
+    },
+    limits: { fileSize: 50 * 1024 * 1024, // 50MB per file limit
+             files: 50 } // 最多同时上传50个文件
+  }))
+  @ApiResult()
+  async batchUploadMarkdown(@UploadedFiles() files: Express.Multer.File[]): Promise<ResultData> {
+    return this.blogService.batchUploadMarkdown(files);
   }
 }

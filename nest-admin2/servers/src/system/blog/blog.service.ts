@@ -10,6 +10,7 @@ import { plainToInstance } from "class-transformer";
 import { AppHttpCode } from '../../common/enums/code.enum';
 import { UpdateBlogDto } from './dto/update-blog.dto';
 import { ConfigService } from '@nestjs/config';
+import * as yaml from 'js-yaml';
 
 @Injectable()
 export class BlogService {
@@ -248,7 +249,7 @@ export class BlogService {
     // 检查文件类型
     const allowedTypes = ['text/plain', 'text/markdown', 'application/octet-stream']; // application/octet-stream 是某些系统对 .md 文件的识别
     const allowedExtensions = ['.md', '.markdown'];
-    
+
     const fileExtension = path.extname(file.originalname).toLowerCase();
     if (!allowedTypes.includes(file.mimetype) && !allowedExtensions.includes(fileExtension)) {
       console.log('文件类型:', file.mimetype);
@@ -294,5 +295,146 @@ export class BlogService {
       console.error('上传Markdown文件时出错:', error);
       return ResultData.fail(AppHttpCode.SERVICE_ERROR, `文件处理失败: ${error.message}`);
     }
+  }
+
+  /** 批量上传Markdown文件夹并解析内容 */
+  async batchUploadMarkdown(files: Express.Multer.File[]): Promise<ResultData> {
+    if (!files || files.length === 0) {
+      return ResultData.fail(AppHttpCode.PARAM_INVALID, '请至少选择一个Markdown文件');
+    }
+
+    const results: any[] = [];
+    const failedFiles: string[] = [];
+
+    for (const file of files) {
+      try {
+        // 检查文件类型
+        const allowedTypes = ['text/plain', 'text/markdown', 'application/octet-stream'];
+        const allowedExtensions = ['.md', '.markdown'];
+
+        const fileExtension = path.extname(file.originalname).toLowerCase();
+        if (!allowedTypes.includes(file.mimetype) && !allowedExtensions.includes(fileExtension)) {
+          failedFiles.push(`${file.originalname} - 不是有效的Markdown文件`);
+          continue;
+        }
+
+        // 检查文件大小 (最大50MB)
+        const maxSize = 50 * 1024 * 1024;
+        if (file.size > maxSize) {
+          failedFiles.push(`${file.originalname} - 文件大小超过50MB限制`);
+          continue;
+        }
+
+        // 读取文件内容
+        let content: string;
+        if (file.buffer) {
+          content = file.buffer.toString('utf8');
+        } else if (file.path) {
+          content = fs.readFileSync(file.path, 'utf8');
+        } else {
+          failedFiles.push(`${file.originalname} - 无法读取文件内容`);
+          continue;
+        }
+
+        // 从Markdown内容中提取标题
+        const titleMatch = content.match(/^#\s+(.+)$/m);
+        let title = '';
+        if (titleMatch) {
+          title = titleMatch[1].trim();
+        } else {
+          // 如果没有找到标题，则使用文件名（去掉扩展名）
+          title = path.basename(file.originalname, fileExtension);
+        }
+
+        // 解析frontmatter（如果有）
+        let parsedContent = content;
+        let metadata: any = {};
+        
+        // 尝试解析YAML frontmatter
+        const frontmatterRegex = /^---\s*\n([\s\S]*?)\n?---\s*\n/;
+        const frontmatterMatch = content.match(frontmatterRegex);
+        
+        if (frontmatterMatch) {
+          try {
+            metadata = yaml.load(frontmatterMatch[1]) || {};
+            parsedContent = content.slice(frontmatterMatch[0].length);
+          } catch (e) {
+            console.warn('解析YAML frontmatter失败:', e);
+          }
+        }
+
+        // 从文件路径中提取可能的分类信息（如果文件在特定目录中）
+        let category = metadata.category || '未分类';
+        if (!metadata.category && file.fieldname) {
+          // 如果文件是通过文件夹上传的，field可能包含路径信息
+          const pathParts = file.fieldname.split('/');
+          if (pathParts.length > 1) {
+            // 使用第一个路径部分作为分类（如果它不是根目录）
+            const potentialCategory = pathParts[0];
+            if (potentialCategory && potentialCategory !== 'files') {
+              category = potentialCategory;
+            }
+          }
+        }
+
+        // 从fieldname中提取更准确的路径信息
+        let filePath = file.originalname; // 默认使用原始文件名
+        if (file.fieldname && file.fieldname.startsWith('files[')) {
+          // 如果是通过文件夹上传，尝试提取路径信息
+          // Multer通常会将文件字段命名为 'files[originalName]' 或类似格式
+          const match = file.fieldname.match(/files\[([^\]]+)\]/);
+          if (match && match[1]) {
+            filePath = match[1]; // 使用原始路径名
+          }
+        }
+
+        // 创建博客实体并保存到数据库
+        const blogEntity = new BlogEntity();
+        blogEntity.title = title;
+        blogEntity.content = parsedContent;
+        blogEntity.category = category;
+        blogEntity.tags = Array.isArray(metadata.tags) ? metadata.tags.join(',') : (metadata.tags || '默认');
+        blogEntity.author = metadata.author || 'admin';
+        blogEntity.status = metadata.status || 'draft';
+        blogEntity.createTime = new Date();
+        blogEntity.updateTime = new Date();
+        blogEntity.viewCount = 0;
+
+        // 保存到数据库
+        const savedBlog = await this.blogManager.save(BlogEntity, blogEntity);
+
+        results.push({
+          id: savedBlog.id, // 添加数据库ID
+          filename: file.originalname,
+          filepath: filePath, // 保留更准确的路径信息
+          title: title,
+          content: parsedContent,
+          metadata: metadata, // 包含从frontmatter解析出的元数据
+          status: 'draft', // 默认为草稿状态
+          category: category, // 使用frontmatter中的分类或从路径推断的分类
+          tags: metadata.tags || ['默认'], // 使用frontmatter中的标签，否则使用默认值
+          author: metadata.author || 'admin', // 使用frontmatter中的作者，否则使用默认值
+          success: true
+        });
+      } catch (error) {
+        console.error(`处理文件 ${file.originalname} 时出错:`, error);
+        failedFiles.push(`${file.originalname} - ${error.message}`);
+      }
+    }
+
+    const successCount = results.length;
+    const totalCount = files.length;
+    const failureCount = failedFiles.length;
+
+    return ResultData.ok({
+      results: results,
+      failedFiles: failedFiles,
+      summary: {
+        total: totalCount,
+        success: successCount,
+        failed: failureCount,
+        message: `批量上传完成，成功处理 ${successCount} 个文件，失败 ${failureCount} 个文件`
+      }
+    });
   }
 }

@@ -26,6 +26,12 @@
                             </el-icon>
                             上传Markdown
                         </el-button>
+                        <el-button type="warning" @click="showBatchUploader = true">
+                            <el-icon>
+                                <Upload />
+                            </el-icon>
+                            批量上传Markdown
+                        </el-button>
                     </div>
                 </div>
             </div>
@@ -50,6 +56,11 @@
         <el-dialog v-model="showUploader" title="上传Markdown文件" width="500px" @close="handleUploaderClose">
             <MarkdownUploader @upload-success="handleUploadSuccess" @upload-error="handleUploadError" />
         </el-dialog>
+        
+        <!-- 批量Markdown上传器 -->
+        <el-dialog v-model="showBatchUploader" title="批量上传Markdown文件" width="80%" @close="handleBatchUploaderClose">
+            <BatchMarkdownUploader @batch-upload-complete="handleBatchUploadComplete" @batch-upload-error="handleBatchUploadError" />
+        </el-dialog>
     </div>
 </template>
 
@@ -61,7 +72,9 @@ import BlogList from './components/BlogList.vue'
 import BlogEditor from './components/BlogEditor.vue'
 import BlogViewer from './components/BlogViewer.vue'
 import MarkdownUploader from './components/MarkdownUploader.vue'
+import BatchMarkdownUploader from './components/BatchMarkdownUploader.vue'
 import { getBlogList } from '@/api/boke'
+import emitter from '@/utils/mitt'
 
 
 import type { Blog, BlogFormData } from './types/blog'
@@ -71,6 +84,7 @@ const loading = ref(false)          // 全局加载状态，用于显示加载�
 const showEditor = ref(false)       // 控制博客编辑器抽屉的显示/隐藏
 const showViewer = ref(false)       // 控制博客查看器弹窗的显示/隐藏
 const showUploader = ref(false)    // 控制Markdown上传器弹窗的显示/隐藏
+const showBatchUploader = ref(false) // 控制批量Markdown上传器弹窗的显示/隐藏
 const isEdit = ref(false)          // 标记当前是编辑模式还是新增模式
 const searchKeyword = ref('')       // 搜索关键词，用于过滤博客列表
 
@@ -126,6 +140,10 @@ const handleUploaderClose = () => {
     showUploader.value = false
 }
 
+const handleBatchUploaderClose = () => {
+    showBatchUploader.value = false
+}
+
 const handleUploadSuccess = (content: string, fileName: string) => {
     // 使用从后端解析出的标题，如果后端没有提供，则从内容中提取
     let title = fileName.replace(/\.md$/, '') // 默认使用文件名
@@ -161,6 +179,22 @@ const handleUploadSuccess = (content: string, fileName: string) => {
 
 const handleUploadError = (error: string) => {
     ElMessage.error(error)
+}
+
+const handleBatchUploadComplete = (results: any[]) => {
+    // 批量上传完成后，可以选择性地打开批量编辑界面或逐个处理
+    ElMessage.success(`批量上传完成，成功处理 ${results.filter(r => r.success).length} 个文件`);
+    
+    // 关闭上传器并刷新列表
+    showBatchUploader.value = false;
+    
+    // 批量上传后不需要打开编辑器，直接刷新列表
+    emitter.emit('refreshBlogList');
+};
+
+
+const handleBatchUploadError = (error: string) => {
+    ElMessage.error(`批量上传失败: ${error}`)
 }
 
 onMounted(() => {

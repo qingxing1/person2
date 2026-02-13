@@ -140,16 +140,33 @@ const handleAdd = () => {
 }
 // 删除博客
 const handleDelete = async (blog: Blog) => {
-  // 删除博客
-  const res: any = await deleteBlog(blog.id)
-  if (res.code === 200) {
-    ElMessage.success('删除成功')
-    // 刷新博客列表
-    getBokeList()
-  } else {
-    ElMessage.error(res.msg)
+  try {
+    // 显示确认对话框
+    await ElMessageBox.confirm(
+      `确定要删除博客 "${blog.title}" 吗？此操作不可撤销。`,
+      '确认删除',
+      {
+        confirmButtonText: '确定删除',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    
+    // 删除博客
+    const res: any = await deleteBlog(blog.id)
+    if (res.code === 200) {
+      ElMessage.success('删除成功')
+      // 刷新博客列表
+      getBokeList()
+    } else {
+      ElMessage.error(res.msg)
+    }
+  } catch (error) {
+    // 用户取消删除操作
+    if (error !== 'cancel') {
+      console.error('删除博客时发生错误:', error)
+    }
   }
-
 }
 
 // 获取博客列表
