@@ -1,19 +1,22 @@
-import { 
-  Controller, 
-  Get, 
-  Post, 
-  Put, 
-  Body, 
-  Param, 
-  Delete, 
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Body,
+  Param,
+  Delete,
   Query,
   UseInterceptors,
   UploadedFile,
   UploadedFiles,
-  HttpCode
+  HttpCode,
+  StreamableFile
 } from '@nestjs/common';
+import { Express } from 'express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import * as path from 'path';
 
 import { ApiResult } from '../../common/decorators/api-result.decorator';
 import { ResultData } from '../../common/utils/result';
@@ -101,7 +104,15 @@ export class BlogController {
     }
   })
   @HttpCode(200)
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', {
+    fileFilter: (req, file, callback) => {
+      if (!file.mimetype.startsWith('image/')) {
+        return callback(new Error('只允许上传图片文件'), false);
+      }
+      callback(null, true);
+    },
+    limits: { fileSize: 5 * 1024 * 1024 }
+  }))
   @ApiResult(String)
   async uploadCoverImage(@UploadedFile() file: Express.Multer.File): Promise<ResultData> {
     return this.blogService.uploadImage(file, 'cover');
@@ -126,9 +137,51 @@ export class BlogController {
     }
   })
   @HttpCode(200)
-  @UseInterceptors(FilesInterceptor('files', 10))
+  @UseInterceptors(FilesInterceptor('files', 10, {
+    fileFilter: (req, file, callback) => {
+      if (!file.mimetype.startsWith('image/')) {
+        return callback(new Error('只允许上传图片文件'), false);
+      }
+      callback(null, true);
+    },
+    limits: { fileSize: 5 * 1024 * 1024 }
+  }))
   @ApiResult(String, true)
   async uploadImages(@UploadedFiles() files: Express.Multer.File[]): Promise<ResultData> {
     return this.blogService.uploadImages(files, 'content');
+  }
+
+  @Post('upload/markdown')
+  @ApiOperation({ summary: '上传Markdown文件并创建博客' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: 'Markdown文件'
+        }
+      }
+    }
+  })
+  @HttpCode(200)
+  @UseInterceptors(FileInterceptor('file', {
+    fileFilter: (req, file, callback) => {
+      const allowedTypes = ['text/plain', 'text/markdown', 'text/x-markdown', 'application/octet-stream'];
+      const allowedExtensions = ['.md', '.markdown'];
+      const fileExtension = path.extname(file.originalname).toLowerCase();
+      
+      if (!allowedTypes.includes(file.mimetype) && !allowedExtensions.includes(fileExtension)) {
+        return callback(new Error('只允许上传Markdown文件'), false);
+      }
+      callback(null, true);
+    },
+    limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit for markdown files
+  }))
+  @ApiResult()
+  async uploadMarkdown(@UploadedFile() file: Express.Multer.File): Promise<ResultData> {
+    return this.blogService.uploadMarkdown(file);
   }
 }

@@ -277,7 +277,19 @@ watch(() => props.blog, (newBlog) => {
     form.value = {
       id: newBlog.id?.toString(),
       title: newBlog.title || '',
-      tags: getTagsArray(newBlog.tags),
+      tags: getTagsString(getTagsArray(newBlog.tags)), // 将标签数组转换回字符串
+      category: newBlog.category || '',
+      status: newBlog.status || 'draft',
+      content: newBlog.content || '',
+      coverImage: newBlog.coverImage || '',
+      author: newBlog.author || 'admin',
+    }
+  } else if (newBlog && !props.isEdit) {
+    // 处理新建博客的情况，当不是编辑模式但有博客数据时
+    form.value = {
+      id: newBlog.id?.toString() || '',
+      title: newBlog.title || '',
+      tags: getTagsString(getTagsArray(newBlog.tags)), // 将标签数组转换回字符串
       category: newBlog.category || '',
       status: newBlog.status || 'draft',
       content: newBlog.content || '',
@@ -344,7 +356,7 @@ watch(() => [props.visible, props.currentBlogId, props.isEdit], ([visible, blogI
   if (visible) {
     if (isEdit && blogId) {
       getBlogDetailById(blogId)
-    } else if (!isEdit) {
+    } else if (!isEdit && !props.blog) { // 只有在不是编辑模式且没有传入blog数据时才重置表单
       form.value = {
         id: '',
         title: '',
@@ -362,7 +374,7 @@ watch(() => [props.visible, props.currentBlogId, props.isEdit], ([visible, blogI
 // 监听isEdit变化，确保模式切换时正确重置表单
 watch(() => props.isEdit, (newIsEdit) => {
   if (props.visible) {
-    if (!newIsEdit) {
+    if (!newIsEdit && !props.blog) { // 只有在没有传入blog数据时才重置表单
       form.value = {
         id: '',
         title: '',
@@ -381,10 +393,10 @@ watch(() => props.isEdit, (newIsEdit) => {
 onMounted(() => {
   // 加载分类和标签数据
   loadMetadata()
-  
+
   if (props.visible && props.isEdit && props.currentBlogId) {
     getBlogDetailById(props.currentBlogId)
-  } else if (props.visible && !props.isEdit) {
+  } else if (props.visible && !props.isEdit && !props.blog) {
     form.value = {
       id: '',
       title: '',

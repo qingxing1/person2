@@ -127,22 +127,32 @@ const handleUploaderClose = () => {
 }
 
 const handleUploadSuccess = (content: string, fileName: string) => {
-    // 从markdown内容提取标题（第一行的#标题）
-    const titleMatch = content.match(/^#\s+(.+)$/m)
-    const title = titleMatch ? titleMatch[1] : fileName.replace(/\.md$/, '')
+    // 使用从后端解析出的标题，如果后端没有提供，则从内容中提取
+    let title = fileName.replace(/\.md$/, '') // 默认使用文件名
+    if (content) {
+        // 如果后端没有提供标题，尝试从内容中提取
+        const titleMatch = content.match(/^#\s+(.+)$/m)
+        if (titleMatch) {
+            title = titleMatch[1]
+        }
+    }
 
     // 创建新博客
-    const newBlog: BlogFormData = {
+    const newBlog: Blog = {
+        id: '', // 上传时还没有ID
         title,
         tags: '',
         category: '其他',
         status: 'draft',
-        content
+        content,
+        author: 'admin', // 默认作者
+        createTime: new Date().toISOString(), // 使用当前时间
+        coverImage: '' // 默认无封面
     }
 
     // 打开编辑器，预填充内容
     isEdit.value = false
-    currentBlog.value = newBlog as Blog
+    currentBlog.value = newBlog
     showUploader.value = false
     showEditor.value = true
 

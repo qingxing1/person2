@@ -238,4 +238,61 @@ export class BlogService {
 
     return ResultData.ok(uploadedUrls);
   }
+
+  /** 上传Markdown文件并解析内容 */
+  async uploadMarkdown(file: Express.Multer.File): Promise<ResultData> {
+    if (!file) {
+      return ResultData.fail(AppHttpCode.PARAM_INVALID, '请选择要上传的Markdown文件');
+    }
+
+    // 检查文件类型
+    const allowedTypes = ['text/plain', 'text/markdown', 'application/octet-stream']; // application/octet-stream 是某些系统对 .md 文件的识别
+    const allowedExtensions = ['.md', '.markdown'];
+    
+    const fileExtension = path.extname(file.originalname).toLowerCase();
+    if (!allowedTypes.includes(file.mimetype) && !allowedExtensions.includes(fileExtension)) {
+      console.log('文件类型:', file.mimetype);
+      return ResultData.fail(AppHttpCode.PARAM_INVALID, '只允许上传Markdown文件(.md, .markdown)');
+    }
+
+    // 检查文件大小 (最大50MB)
+    const maxSize = 50 * 1024 * 1024;
+    if (file.size > maxSize) {
+      return ResultData.fail(AppHttpCode.PARAM_INVALID, '文件大小不能超过50MB');
+    }
+
+    try {
+      // 读取文件内容
+      let content: string;
+      if (file.buffer) {
+        content = file.buffer.toString('utf8');
+      } else if (file.path) {
+        content = fs.readFileSync(file.path, 'utf8');
+      } else {
+        return ResultData.fail(AppHttpCode.SERVICE_ERROR, '无法读取文件内容');
+      }
+
+      // 从Markdown内容中提取标题
+      // 尝试匹配 # 标题格式
+      const titleMatch = content.match(/^#\s+(.+)$/m);
+      let title = '';
+      if (titleMatch) {
+        title = titleMatch[1].trim();
+      } else {
+        // 如果没有找到标题，则使用文件名（去掉扩展名）
+        title = path.basename(file.originalname, fileExtension);
+      }
+
+      // 返回解析后的Markdown内容和标题，让前端决定是否创建博客
+      return ResultData.ok({
+        content: content,
+        title: title,
+        fileName: file.originalname,
+        message: 'Markdown文件上传并解析成功'
+      });
+    } catch (error) {
+      console.error('上传Markdown文件时出错:', error);
+      return ResultData.fail(AppHttpCode.SERVICE_ERROR, `文件处理失败: ${error.message}`);
+    }
+  }
 }

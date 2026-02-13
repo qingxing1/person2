@@ -134,3 +134,15 @@ export function updateBlogConfig(data: BlogMetadataResponse): Promise<{ code: nu
   })
 }
 
+// 上传Markdown文件并创建博客
+export function uploadMarkdownFile(formData: FormData) {
+  return request({
+    url: '/blog/upload/markdown',
+    method: ApiMethodContants.POST,
+    data: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
+
