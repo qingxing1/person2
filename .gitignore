@@ -1,1 +1,21 @@
 QWEN.md
+
+# Dependencies
+node_modules/
+
+# Logs
+logs/
+*.log
+packages/*/logs/
+packages/*/dist/
+packages/*/*.log
+
+# Temporary files
+tmp/
+.temp/
+.DS_Store
+Thumbs.db
+
+# Compiled JavaScript
+*.d.ts
+packages/*/*.d.ts
