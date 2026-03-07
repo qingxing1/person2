@@ -196,7 +196,7 @@ importers:
         specifier: ^0.32.2
         version: 0.32.4(jsdom@22.1.0)(sass@1.97.3)(terser@5.46.0)
       vue-tsc:
-        specifier: ^1.8.1
+        specifier: ^1.8.27
         version: 1.8.27(typescript@5.7.3)
 
   packages/backend:

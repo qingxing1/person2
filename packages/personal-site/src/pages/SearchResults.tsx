@@ -1,6 +1,6 @@
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { SearchResult } from '@/lib/types';
-import { cn } from '@/lib/utils';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 // 根据难度返回不同的颜色类
 const getDifficultyColor = (difficulty: string) => {
@@ -34,7 +34,10 @@ export default function SearchResults() {
   const location = useLocation();
   const navigate = useNavigate();
   const { results, query } = location.state as { results: SearchResult[], query: string };
-  
+
+  // 设置页面 title
+  usePageTitle(`搜索：${query}`);
+
   // 分离博客和算法结果
   const blogResults = results.filter(item => item.type === 'blog');
   const algorithmResults = results.filter(item => item.type === 'algorithm');

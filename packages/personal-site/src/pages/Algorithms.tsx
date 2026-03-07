@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { getMethodList, getMethodCategory} from "@/services/method";
+import { usePageTitle } from '@/hooks/usePageTitle';
 import { cn } from "@/lib/utils";
 import { extractTextFromMarkdown } from "@/utils/text-handle";
 import CollapsibleAlgorithmSidebar from "@/components/CollapsibleAlgorithmSidebar";
@@ -99,6 +100,9 @@ export default function Algorithms() {
   const [limit] = useState(20);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  // 设置页面 title
+  usePageTitle('算法题库');
 
   const activeDifficulty = searchParams.get("difficulty") || "";
   const activeCategory = searchParams.get("category") || "";

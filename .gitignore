@@ -19,3 +19,11 @@ Thumbs.db
 # Compiled JavaScript
 *.d.ts
 packages/*/*.d.ts
+
+# Docker
+.dockerignore
+.env.docker
+
+# Upload directory
+upload/
+packages/upload/

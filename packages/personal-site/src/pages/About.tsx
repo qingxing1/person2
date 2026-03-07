@@ -1,9 +1,13 @@
 import { Link } from 'react-router-dom';
 import { usePerson } from '@/contexts/PersonContext';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 export default function About() {
   const { personInfo, avatarUrl, loading, error, refreshPersonInfo } = usePerson();
 
+
+  // 设置页面 title
+  usePageTitle('关于我');
   // 处理技能数组（直接使用API返回的数组）
   const skills = personInfo?.skills || [];
 
@@ -86,7 +90,7 @@ export default function About() {
                       )}
                       {personInfo.website && (
                         <a
-                          href={personInfo.website}
+                          href='http://qiao252423.top:6996/files/______________1_-1772876546407-926509291.pdf'
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center justify-center h-10 gap-2 px-6 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 transition-all duration-300 font-medium text-sm shadow-md flex-1"
@@ -96,7 +100,7 @@ export default function About() {
                         </a>
                       )}
                         <Link
-                        to="/contact"
+                        to="https://blog.csdn.net/duduanwang?spm=1000.2115.3001.5343"
                         className="flex items-center justify-center h-10 gap-2 px-6 py-1.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-200 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-900/40 transition-all duration-300 font-medium text-sm shadow-md flex-1"
                         >
                           <i className="fa-solid fa-envelope"></i>
@@ -197,12 +201,12 @@ export default function About() {
             ) : (
               <p className="text-slate-500 dark:text-slate-400 italic">暂无个人简介</p>
             )}
-            {personInfo.degree_simple && personInfo.school_simple && (
+            {/* {personInfo.degree_simple && personInfo.school_simple && (
               <p>
                 毕业于 <span className="text-indigo-600 dark:text-indigo-400 font-medium">{personInfo.school_simple}</span>，获得
                 <span className="text-indigo-600 dark:text-indigo-400 font-medium">{personInfo.degree_simple}</span> 学位。
               </p>
-            )}
+            )} */}
           </div>
         </div>
 

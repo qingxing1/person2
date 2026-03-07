@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import { cn } from '@/lib/utils';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -113,9 +112,19 @@ export function Footer() {
         </div>
         
         <div className="border-t border-gray-200 dark:border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            &copy; {currentYear} TechPortfolio. 保留所有权利。
-          </p>
+          <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              &copy; {currentYear} 个人技术博客。保留所有权利。
+            </p>
+            <a
+              href="https://beian.miit.gov.cn/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            >
+              冀 ICP 备 2025126403 号
+            </a>
+          </div>
           <div className="flex space-x-6 mt-4 md:mt-0">
             <Link to="/privacy" className="text-sm text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
               隐私政策

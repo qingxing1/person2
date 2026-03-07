@@ -4,6 +4,7 @@ import { getAvatar, addVisit } from "@/services/common";
 import { getMethodList } from '@/services/method';
 import { getBokeList } from '@/services/boke';
 import { usePerson } from '@/contexts/PersonContext';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import * as echarts from "echarts";
 import { extractTextFromMarkdown } from '@/utils/text-handle';
 
@@ -40,6 +41,10 @@ const getDifficultyLabel = (difficulty: string) => {
 function Home() {
   const navigate = useNavigate();
   const { personInfo, avatarUrl } = usePerson();
+
+  // 设置页面 title
+  usePageTitle('首页');
+
   const stop = (e: React.MouseEvent) => e.stopPropagation();
   const onKeyGo = (go: () => void) => (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {

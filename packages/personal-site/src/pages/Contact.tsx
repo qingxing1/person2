@@ -2,6 +2,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { sendMessage } from "@/services/message";
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 // 联系表单组件
 function ContactForm() {
@@ -225,6 +226,9 @@ function ContactForm() {
 }
 
 export default function Contact() {
+  // 设置页面 title
+  usePageTitle('联系我');
+
   return (
     <div className="max-w-6xl mx-auto">
       <header className="mb-12">

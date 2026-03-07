@@ -7,8 +7,8 @@
     "dev:client": "vite --host --port 3000",
     "dev": "pnpm dev:client",
     "build:client": "vite build --mode production --outDir dist/static",
-    "build:clean": "if exist dist rmdir /s /q dist",
-    "build:copy": "copy package.json dist && echo build completed > dist/build.flag",
+    "build:clean": "rm -rf dist",
+    "build:copy": "cp package.json dist && echo build completed > dist/build.flag",
     "build": "pnpm build:clean && pnpm build:client && pnpm build:copy",
     "preview": "vite preview --port 4173"
   },

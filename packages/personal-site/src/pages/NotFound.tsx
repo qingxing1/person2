@@ -1,11 +1,15 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSearch } from '@/hooks/useSearch';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 export default function NotFound() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const { results } = useSearch(searchQuery);
+
+  // 设置页面 title
+  usePageTitle('页面未找到');
   
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { getBokeList } from '@/services/boke';
 import { getBokeCategory, getBokeTag } from '@/services/boke';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 import { cn } from '@/lib/utils';
 type Category = { id: string; name: string; slug: string; count?: number };
@@ -108,6 +109,9 @@ export default function Blog() {
   const [size] = useState(20);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  // 设置页面 title
+  usePageTitle('博客文章');
 
   // 获取分类与标签（简单形态：接口直接返回数组）
   useEffect(() => {

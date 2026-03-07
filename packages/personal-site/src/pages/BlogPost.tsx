@@ -4,6 +4,7 @@ import { getBokeDetail } from '@/services/boke';
 import { MdPreview, MdCatalog } from 'md-editor-rt';
 import 'md-editor-rt/lib/preview.css';
 import { useTheme } from '@/hooks/useTheme';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 export default function BlogPostPage() {
   const { id } = useParams<{ id: string }>();
@@ -65,6 +66,9 @@ export default function BlogPostPage() {
     };
     fetchDetail();
   }, [id]);
+
+  // 设置页面 title
+  usePageTitle(post?.title || '博客详情');
 
   if (loading) {
     return (

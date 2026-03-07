@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { MdPreview } from 'md-editor-rt';
 import { useTheme } from '@/hooks/useTheme';
 import { useMemo } from 'react';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 // 根据难度返回不同的颜色类
 const getDifficultyColor = (difficulty: string) => {
@@ -81,6 +82,9 @@ export default function AlgorithmDetail() {
     };
     fetchDetail();
   }, [id]);
+
+  // 设置页面 title
+  usePageTitle(detail?.title || '算法详情');
 
   if (loading) {
     return (
