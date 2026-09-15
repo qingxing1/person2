@@ -9,7 +9,8 @@ COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY packages/shared ./packages/shared
 COPY packages/backend/package.json ./packages/backend/package.json
 
-RUN pnpm install --frozen-lockfile --registry=https://registry.npmmirror.com
+# 安装依赖
+RUN pnpm install --frozen-lockfile
 
 # 拷贝源码并构建（含 workspace 共享包）
 COPY packages/backend ./packages/backend
