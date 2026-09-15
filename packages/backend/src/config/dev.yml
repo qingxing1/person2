@@ -1,7 +1,7 @@
 # 开发环境配置
 app:
   prefix: '/api'
-  port: 6999
+  port: 7000
   logger:
     # 项目日志存储路径，相对路径（相对本项目根目录）或绝对路径
     dir: '../logs'
@@ -10,20 +10,17 @@ app:
     # location 文件上传后存储目录，相对路径（相对本项目根目录）或绝对路径
     location: '../../upload'
     # 文件服务器地址，这是开发环境的配置 生产环境请自行配置成可访问域名
-    domain: 'http://localhost:6999'
+    domain: 'http://localhost:7000'
     # 文件虚拟路径, 必须以 / 开头， 如 http://localhost:8081/static/****.jpg  , 如果不需要则 设置 ''
     serveRoot: '/static'
 # 数据库配置
 db:
   mysql:
-    # host: 'localhost'
-    host: '115.190.32.31'
-    username: 'qiao'
-    password: 'Qiao@123456'
-    # username: 'root'
-    # password: '0b3bf6af5250fc69A!'
+    host: 'localhost'
+    username: 'root'
+    password: '123456'
     database: 'kapok'
-    port: 3306
+    port: 3307
     charset: 'utf8mb4'
     logger: false  # 生产环境关闭详细日志
     logging: false

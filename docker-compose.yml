@@ -1,0 +1,99 @@
+services:
+  # MySQL 数据库
+  mysql:
+    image: mysql:8.0
+    container_name: nest-admin-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?请在根目录 .env 中设置 MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-kapok}
+      TZ: Asia/Shanghai
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./kapok.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-p$${MYSQL_ROOT_PASSWORD}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # Redis 缓存
+  redis:
+    image: redis:7-alpine
+    container_name: nest-admin-redis
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - app-network
+
+  # 后端 API 服务
+  backend:
+    build:
+      context: .
+      dockerfile: packages/backend/Dockerfile
+    image: ${ACR_REGISTRY:-person}/backend:latest
+    container_name: nest-admin-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: docker
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      APP_PORT: 6999
+      UPLOAD_LOCATION: /app/uploads
+      TZ: Asia/Shanghai
+    ports:
+      - "${BACKEND_PORT:-6999}:6999"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - app-network
+    volumes:
+      - upload-data:/app/uploads
+
+  # 管理后台 (Nginx)
+  admin-frontend:
+    build:
+      context: .
+      dockerfile: packages/admin-frontend/Dockerfile
+    image: ${ACR_REGISTRY:-person}/admin-frontend:latest
+    container_name: nest-admin-frontend
+    restart: unless-stopped
+    ports:
+      - "${ADMIN_PORT:-80}:80"
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+  # 个人网站 (Nginx)
+  blog-frontend:
+    build:
+      context: .
+      dockerfile: packages/personal-site/Dockerfile
+    image: ${ACR_REGISTRY:-person}/blog-frontend:latest
+    container_name: kouzi-blog-frontend
+    restart: unless-stopped
+    ports:
+      - "${BLOG_PORT:-3000}:80"
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+volumes:
+  mysql-data: 
+  redis-data: 
+  upload-data: 
+
+networks:
+  app-network:
+    driver: bridge
