@@ -16,7 +16,7 @@ RUN pnpm --filter @person/shared-types --filter @person/shared-utils run build \
     && pnpm --filter @person/admin-frontend run build-only
 
 # ---------- 运行阶段 ----------
-FROM nginx:alpine
+FROM nginx:1.31.2-alpine
 
 COPY --from=builder /app/packages/admin-frontend/dist /usr/share/nginx/html
 COPY nginx/admin.conf /etc/nginx/conf.d/default.conf

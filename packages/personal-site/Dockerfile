@@ -15,7 +15,7 @@ COPY packages/personal-site ./packages/personal-site
 RUN pnpm --filter @person/personal-site... run build:client
 
 # ---------- 运行阶段 ----------
-FROM nginx:alpine
+FROM nginx:1.31.2-alpine
 
 COPY --from=builder /app/packages/personal-site/dist/static /usr/share/nginx/html
 COPY nginx/blog.conf /etc/nginx/conf.d/default.conf
