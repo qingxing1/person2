@@ -111,8 +111,6 @@ jobs:
           tags: |
             ${{ vars.REGISTRY }}/${{ vars.REGISTRY_NAMESPACE }}/backend:latest
             ${{ vars.REGISTRY }}/${{ vars.REGISTRY_NAMESPACE }}/backend:${{ steps.meta.outputs.sha_tag }}
-          cache-from: type=registry,ref=${{ vars.REGISTRY }}/${{ vars.REGISTRY_NAMESPACE }}/backend:buildcache
-          cache-to: type=registry,ref=${{ vars.REGISTRY }}/${{ vars.REGISTRY_NAMESPACE }}/backend:buildcache,mode=max
 
       - name: 构建并推送管理后台镜像
         uses: docker/build-push-action@v6
@@ -123,8 +121,6 @@ jobs:
           tags: |
             ${{ vars.REGISTRY }}/${{ vars.REGISTRY_NAMESPACE }}/admin-frontend:latest
             ${{ vars.REGISTRY }}/${{ vars.REGISTRY_NAMESPACE }}/admin-frontend:${{ steps.meta.outputs.sha_tag }}
-          cache-from: type=registry,ref=${{ vars.REGISTRY }}/${{ vars.REGISTRY_NAMESPACE }}/admin-frontend:buildcache
-          cache-to: type=registry,ref=${{ vars.REGISTRY }}/${{ vars.REGISTRY_NAMESPACE }}/admin-frontend:buildcache,mode=max
 
       - name: 构建并推送个人网站镜像
         uses: docker/build-push-action@v6
@@ -135,8 +131,6 @@ jobs:
           tags: |
             ${{ vars.REGISTRY }}/${{ vars.REGISTRY_NAMESPACE }}/blog-frontend:latest
             ${{ vars.REGISTRY }}/${{ vars.REGISTRY_NAMESPACE }}/blog-frontend:${{ steps.meta.outputs.sha_tag }}
-          cache-from: type=registry,ref=${{ vars.REGISTRY }}/${{ vars.REGISTRY_NAMESPACE }}/blog-frontend:buildcache
-          cache-to: type=registry,ref=${{ vars.REGISTRY }}/${{ vars.REGISTRY_NAMESPACE }}/blog-frontend:buildcache,mode=max
 
   # ------------------------------------------------------------
   # 阶段 3: SSH 部署到服务器 (仅 master 分支)
