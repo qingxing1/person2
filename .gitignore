@@ -21,6 +21,7 @@ Thumbs.db
 packages/*/*.d.ts
 
 # Docker
+.dockerignore
 .env.docker
 
 # Upload directory
