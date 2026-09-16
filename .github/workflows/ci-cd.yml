@@ -1,0 +1,194 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [master, develop]
+  pull_request:
+    branches: [master]
+
+env:
+  NODE_VERSION: "18"
+  PNPM_VERSION: "8.15.0"
+
+jobs:
+  # ------------------------------------------------------------
+  # 阶段 1: 持续集成 - 安装 / Lint / 测试 / 构建
+  # ------------------------------------------------------------
+  ci:
+    name: Lint / Test / Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      # 共享包必须先构建, 否则各应用的 TS 编译找不到产物
+      - name: 构建共享包
+        run: |
+          pnpm --filter @person/shared-types run build
+          pnpm --filter @person/shared-utils run build
+
+      - name: Lint 检查
+        run: |
+          pnpm --filter @person/backend exec eslint "{src,apps,libs,test}/**/*.ts"
+          pnpm --filter @person/admin-frontend exec eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --ignore-path .gitignore
+
+      - name: 后端单元测试 (Jest)
+        run: pnpm --filter @person/backend run test
+
+      - name: 管理后台单元测试 (Vitest)
+        run: pnpm --filter @person/admin-frontend exec vitest run --environment jsdom --root src/
+
+      - name: 构建后端
+        run: pnpm --filter @person/backend run build
+
+      - name: 构建管理后台
+        # vue-tsc 1.8 与 TS 5.5+ 存在兼容性问题 (见 admin-frontend/Dockerfile 注释),
+        # 与 Dockerfile 保持一致, 跳过类型检查直接 Vite 构建
+        run: pnpm --filter @person/admin-frontend run build-only
+
+      - name: 构建个人网站
+        # personal-site 的 build 脚本包含 rm -rf, 在 Linux runner 上可直接运行
+        run: pnpm --filter @person/personal-site run build
+
+      - name: 上传前端构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: |
+            packages/admin-frontend/dist
+            packages/personal-site/dist
+          retention-days: 7
+
+  # ------------------------------------------------------------
+  # 阶段 2: 构建并推送 Docker 镜像 (仅 master 分支)
+  # ------------------------------------------------------------
+  docker:
+    name: Build & Push Images
+    runs-on: ubuntu-latest
+    needs: ci
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 生成镜像标签
+        id: meta
+        run: |
+          echo "sha_tag=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+          echo "date_tag=$(date +%Y%m%d)" >> "$GITHUB_OUTPUT"
+
+      - name: 设置 Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 登录镜像仓库
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ vars.REGISTRY }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: 构建并推送后端镜像
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: packages/backend/Dockerfile
+          push: true
+          tags: |
+            ${{ vars.REGISTRY }}/${{ vars.REGISTRY_NAMESPACE }}/backend:latest
+            ${{ vars.REGISTRY }}/${{ vars.REGISTRY_NAMESPACE }}/backend:${{ steps.meta.outputs.sha_tag }}
+          cache-from: type=registry,ref=${{ vars.REGISTRY }}/${{ vars.REGISTRY_NAMESPACE }}/backend:buildcache
+          cache-to: type=registry,ref=${{ vars.REGISTRY }}/${{ vars.REGISTRY_NAMESPACE }}/backend:buildcache,mode=max
+
+      - name: 构建并推送管理后台镜像
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: packages/admin-frontend/Dockerfile
+          push: true
+          tags: |
+            ${{ vars.REGISTRY }}/${{ vars.REGISTRY_NAMESPACE }}/admin-frontend:latest
+            ${{ vars.REGISTRY }}/${{ vars.REGISTRY_NAMESPACE }}/admin-frontend:${{ steps.meta.outputs.sha_tag }}
+          cache-from: type=registry,ref=${{ vars.REGISTRY }}/${{ vars.REGISTRY_NAMESPACE }}/admin-frontend:buildcache
+          cache-to: type=registry,ref=${{ vars.REGISTRY }}/${{ vars.REGISTRY_NAMESPACE }}/admin-frontend:buildcache,mode=max
+
+      - name: 构建并推送个人网站镜像
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: packages/personal-site/Dockerfile
+          push: true
+          tags: |
+            ${{ vars.REGISTRY }}/${{ vars.REGISTRY_NAMESPACE }}/blog-frontend:latest
+            ${{ vars.REGISTRY }}/${{ vars.REGISTRY_NAMESPACE }}/blog-frontend:${{ steps.meta.outputs.sha_tag }}
+          cache-from: type=registry,ref=${{ vars.REGISTRY }}/${{ vars.REGISTRY_NAMESPACE }}/blog-frontend:buildcache
+          cache-to: type=registry,ref=${{ vars.REGISTRY }}/${{ vars.REGISTRY_NAMESPACE }}/blog-frontend:buildcache,mode=max
+
+  # ------------------------------------------------------------
+  # 阶段 3: SSH 部署到服务器 (仅 master 分支)
+  # ------------------------------------------------------------
+  deploy:
+    name: Deploy to Server
+    runs-on: ubuntu-latest
+    needs: docker
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    environment: production
+    steps:
+      - name: SSH 部署 (docker compose 滚动更新)
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          script: |
+            set -e
+            cd ${{ vars.DEPLOY_DIR }}
+
+            # 登录镜像仓库
+            echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login ${{ vars.REGISTRY }} \
+              -u "${{ secrets.REGISTRY_USERNAME }}" --password-stdin
+
+            # 拉取最新镜像并滚动更新应用服务 (mysql/redis 不受影响)
+            # 注意: 导出变量名为 ACR_REGISTRY, 与 docker-compose.yml 中的 ${ACR_REGISTRY} 对应
+            export ACR_REGISTRY=${{ vars.REGISTRY }}/${{ vars.REGISTRY_NAMESPACE }}
+            docker compose pull backend admin-frontend blog-frontend
+            docker compose up -d --no-deps backend admin-frontend blog-frontend
+
+            # 清理悬空镜像
+            docker image prune -f
+
+            # 健康检查: 等待后端就绪 (最多 60 秒)
+            for i in $(seq 1 12); do
+              if curl -fsS http://localhost:${BACKEND_PORT:-6999} > /dev/null 2>&1; then
+                echo "后端服务健康检查通过"
+                exit 0
+              fi
+              echo "等待后端启动... ($i/12)"
+              sleep 5
+            done
+            echo "警告: 健康检查未通过, 请人工确认服务状态"
+            docker compose logs --tail=50 backend
+            exit 1
+
+      - name: 部署结果通知
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "部署成功: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          else
+            echo "部署失败, 请检查工作流日志"
+          fi
