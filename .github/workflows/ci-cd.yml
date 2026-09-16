@@ -65,84 +65,44 @@ jobs:
         # personal-site 的 build 脚本包含 rm -rf, 在 Linux runner 上可直接运行
         run: pnpm --filter @person/personal-site run build
 
-      - name: 上传前端构建产物
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-dist
-          path: |
-            packages/admin-frontend/dist
-            packages/personal-site/dist
-          retention-days: 7
-
   # ------------------------------------------------------------
-  # 阶段 2: 构建并推送 Docker 镜像 (仅 master 分支)
+  # 阶段 2: rsync 同步代码 + 服务器本地 docker build + compose up
+  # (仅 master 分支, 不再经过任何镜像仓库)
   # ------------------------------------------------------------
-  docker:
-    name: Build & Push Images
+  deploy:
+    name: Rsync & Deploy on Server
     runs-on: ubuntu-latest
     needs: ci
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    environment: production
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
 
-      - name: 生成镜像标签
-        id: meta
+      - name: 配置 SSH 密钥
         run: |
-          echo "sha_tag=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
-          echo "date_tag=$(date +%Y%m%d)" >> "$GITHUB_OUTPUT"
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p ${{ secrets.SERVER_PORT || 22 }} -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
-      - name: 设置 Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: rsync 同步代码到服务器
+        # --delete 保持服务器目录与仓库一致; --exclude 的文件不受影响
+        # .env / upload 等服务器本地文件被排除, 不会被覆盖或删除
+        run: |
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.SERVER_PORT || 22 }}" \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude 'node_modules' \
+            --exclude '**/node_modules' \
+            --exclude '**/dist' \
+            --exclude '.env' \
+            --exclude 'upload' \
+            --exclude 'uploads' \
+            ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ vars.DEPLOY_DIR }}/
 
-      - name: 登录镜像仓库
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ vars.REGISTRY }}
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
-
-      - name: 构建并推送后端镜像
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: packages/backend/Dockerfile
-          push: true
-          tags: |
-            ${{ vars.REGISTRY }}/${{ vars.REGISTRY_NAMESPACE }}/backend:latest
-            ${{ vars.REGISTRY }}/${{ vars.REGISTRY_NAMESPACE }}/backend:${{ steps.meta.outputs.sha_tag }}
-
-      - name: 构建并推送管理后台镜像
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: packages/admin-frontend/Dockerfile
-          push: true
-          tags: |
-            ${{ vars.REGISTRY }}/${{ vars.REGISTRY_NAMESPACE }}/admin-frontend:latest
-            ${{ vars.REGISTRY }}/${{ vars.REGISTRY_NAMESPACE }}/admin-frontend:${{ steps.meta.outputs.sha_tag }}
-
-      - name: 构建并推送个人网站镜像
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: packages/personal-site/Dockerfile
-          push: true
-          tags: |
-            ${{ vars.REGISTRY }}/${{ vars.REGISTRY_NAMESPACE }}/blog-frontend:latest
-            ${{ vars.REGISTRY }}/${{ vars.REGISTRY_NAMESPACE }}/blog-frontend:${{ steps.meta.outputs.sha_tag }}
-
-  # ------------------------------------------------------------
-  # 阶段 3: SSH 部署到服务器 (仅 master 分支)
-  # ------------------------------------------------------------
-  deploy:
-    name: Deploy to Server
-    runs-on: ubuntu-latest
-    needs: docker
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-    environment: production
-    steps:
-      - name: SSH 部署 (docker compose 滚动更新)
+      - name: SSH 在服务器上构建并滚动更新
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -153,22 +113,18 @@ jobs:
             set -e
             cd ${{ vars.DEPLOY_DIR }}
 
-            # 登录镜像仓库
-            echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login ${{ vars.REGISTRY }} \
-              -u "${{ secrets.REGISTRY_USERNAME }}" --password-stdin
+            # 本地构建镜像 (docker-compose.yml 中 image 默认标签为 person/*:latest, 无需仓库)
+            docker compose build backend blog-frontend
 
-            # 拉取最新镜像并滚动更新应用服务 (mysql/redis 不受影响)
-            # 注意: 导出变量名为 ACR_REGISTRY, 与 docker-compose.yml 中的 ${ACR_REGISTRY} 对应
-            export ACR_REGISTRY=${{ vars.REGISTRY }}/${{ vars.REGISTRY_NAMESPACE }}
-            docker compose pull backend blog-frontend
+            # 滚动更新应用服务 (mysql/redis 不受影响)
             docker compose up -d --no-deps backend blog-frontend
 
-            # 清理悬空镜像
+            # 清理悬空镜像 (构建产生的 <none> 中间层)
             docker image prune -f
 
             # 健康检查: 等待后端就绪 (最多 60 秒)
             for i in $(seq 1 12); do
-              if curl -fsS http://localhost:${BACKEND_PORT:-6999} > /dev/null 2>&1; then
+              if curl -fsS http://localhost:${BACKEND_PORT:-6999}/api/health > /dev/null 2>&1; then
                 echo "后端服务健康检查通过"
                 exit 0
               fi
