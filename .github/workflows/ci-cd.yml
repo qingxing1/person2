@@ -160,8 +160,8 @@ jobs:
             # 拉取最新镜像并滚动更新应用服务 (mysql/redis 不受影响)
             # 注意: 导出变量名为 ACR_REGISTRY, 与 docker-compose.yml 中的 ${ACR_REGISTRY} 对应
             export ACR_REGISTRY=${{ vars.REGISTRY }}/${{ vars.REGISTRY_NAMESPACE }}
-            docker compose pull backend admin-frontend blog-frontend
-            docker compose up -d --no-deps backend admin-frontend blog-frontend
+            docker compose pull backend blog-frontend
+            docker compose up -d --no-deps backend blog-frontend
 
             # 清理悬空镜像
             docker image prune -f
