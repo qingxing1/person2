@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common'
-import { InjectRepository } from '@nestjs/typeorm'
-import { Repository } from 'typeorm'
-import { TodoEntity } from './todo.entity'
-import { CreateTodoDto } from './dto/create-todo.dto'
-import { ResultData } from '../../common/utils/result'
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { TodoEntity } from "./todo.entity";
+import { CreateTodoDto } from "./dto/create-todo.dto";
+import { ResultData } from "../../common/utils/result";
 
 @Injectable()
 export class TodoService {
@@ -17,11 +17,11 @@ export class TodoService {
    */
   async create(createDto: CreateTodoDto): Promise<ResultData> {
     try {
-      const todo = this.todoRepository.create(createDto)
-      const saved = await this.todoRepository.save(todo)
-      return ResultData.ok(saved)
+      const todo = this.todoRepository.create(createDto);
+      const saved = await this.todoRepository.save(todo);
+      return ResultData.ok(saved);
     } catch (error) {
-      return ResultData.fail(500, '创建待办事项失败: ' + error.message)
+      return ResultData.fail(500, "创建待办事项失败: " + error.message);
     }
   }
 
@@ -31,11 +31,11 @@ export class TodoService {
   async findAllSimple(): Promise<ResultData> {
     try {
       const list = await this.todoRepository.find({
-        order: { createTime: 'DESC' }
-      })
-      return ResultData.ok(list)
+        order: { createTime: "DESC" },
+      });
+      return ResultData.ok(list);
     } catch (error) {
-      return ResultData.fail(500, '获取待办事项列表失败: ' + error.message)
+      return ResultData.fail(500, "获取待办事项列表失败: " + error.message);
     }
   }
 
@@ -46,17 +46,18 @@ export class TodoService {
     try {
       const [total, completedCount] = await Promise.all([
         this.todoRepository.count(),
-        this.todoRepository.count({ where: { completed: true } })
-      ])
+        this.todoRepository.count({ where: { completed: true } }),
+      ]);
 
       return ResultData.ok({
         total,
         completedCount,
         pendingCount: total - completedCount,
-        completionRate: total > 0 ? Math.round((completedCount / total) * 100) : 0
-      })
+        completionRate:
+          total > 0 ? Math.round((completedCount / total) * 100) : 0,
+      });
     } catch (error) {
-      return ResultData.fail(500, '获取统计信息失败: ' + error.message)
+      return ResultData.fail(500, "获取统计信息失败: " + error.message);
     }
   }
 
@@ -65,13 +66,13 @@ export class TodoService {
    */
   async remove(id: number): Promise<ResultData> {
     try {
-      const result = await this.todoRepository.delete(id)
+      const result = await this.todoRepository.delete(id);
       if (result.affected === 0) {
-        return ResultData.fail(404, '待办事项不存在')
+        return ResultData.fail(404, "待办事项不存在");
       }
-      return ResultData.ok('删除成功')
+      return ResultData.ok("删除成功");
     } catch (error) {
-      return ResultData.fail(500, '删除待办事项失败: ' + error.message)
+      return ResultData.fail(500, "删除待办事项失败: " + error.message);
     }
   }
 
@@ -80,16 +81,16 @@ export class TodoService {
    */
   async toggleComplete(id: number, completed: boolean): Promise<ResultData> {
     try {
-      const todo = await this.todoRepository.findOne({ where: { id } })
+      const todo = await this.todoRepository.findOne({ where: { id } });
       if (!todo) {
-        return ResultData.fail(404, '待办事项不存在')
+        return ResultData.fail(404, "待办事项不存在");
       }
 
-      todo.completed = completed
-      const updated = await this.todoRepository.save(todo)
-      return ResultData.ok(updated)
+      todo.completed = completed;
+      const updated = await this.todoRepository.save(todo);
+      return ResultData.ok(updated);
     } catch (error) {
-      return ResultData.fail(500, '更新完成状态失败: ' + error.message)
+      return ResultData.fail(500, "更新完成状态失败: " + error.message);
     }
   }
 }

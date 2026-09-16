@@ -47,10 +47,11 @@ jobs:
           pnpm --filter @person/admin-frontend exec eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --ignore-path .gitignore
 
       - name: 后端单元测试 (Jest)
-        run: pnpm --filter @person/backend run test
+        # 当前仓库暂无 .spec.ts 测试文件, --passWithNoTests 保证后续补充测试后自动生效
+        run: pnpm --filter @person/backend exec jest --passWithNoTests
 
       - name: 管理后台单元测试 (Vitest)
-        run: pnpm --filter @person/admin-frontend exec vitest run --environment jsdom --root src/
+        run: pnpm --filter @person/admin-frontend exec vitest run --environment jsdom --root src/ --passWithNoTests
 
       - name: 构建后端
         run: pnpm --filter @person/backend run build

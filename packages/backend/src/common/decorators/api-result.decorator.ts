@@ -1,8 +1,8 @@
-import { Type, applyDecorators } from '@nestjs/common'
-import { ApiExtraModels, ApiOkResponse, getSchemaPath } from '@nestjs/swagger'
-import { ResultData } from '../utils/result'
+import { Type, applyDecorators } from "@nestjs/common";
+import { ApiExtraModels, ApiOkResponse, getSchemaPath } from "@nestjs/swagger";
+import { ResultData } from "../utils/result";
 
-const baseTypeNames = ['String', 'Number', 'Boolean']
+const baseTypeNames = ["String", "Number", "Boolean"];
 /**
  * 封装 swagger 返回统一结构
  * 支持复杂类型 {  code, msg, data }
@@ -10,41 +10,47 @@ const baseTypeNames = ['String', 'Number', 'Boolean']
  * @param isArray data 是否是数组
  * @param isPager 设置为 true, 则 data 类型为 { list, total } , false data 类型是纯数组
  */
-export const ApiResult = <TModel extends Type<any>>(model?: TModel, isArray?: boolean, isPager?: boolean) => {
-  let items = null
-  const modelIsBaseType = model && baseTypeNames.includes(model.name)
+export const ApiResult = <TModel extends Type<any>>(
+  model?: TModel,
+  isArray?: boolean,
+  isPager?: boolean
+) => {
+  let items = null;
+  const modelIsBaseType = model && baseTypeNames.includes(model.name);
   if (modelIsBaseType) {
-    items = { type: model.name.toLocaleLowerCase() }
+    items = { type: model.name.toLocaleLowerCase() };
   } else {
-    items = { $ref: getSchemaPath(model) }
+    items = { $ref: getSchemaPath(model) };
   }
-  let prop = null
+  let prop = null;
   if (isArray && isPager) {
     prop = {
-      type: 'object',
+      type: "object",
       properties: {
         list: {
-          type: 'array',
+          type: "array",
           items,
         },
         total: {
-          type: 'number',
+          type: "number",
           default: 0,
         },
       },
-    }
+    };
   } else if (isArray) {
     prop = {
-      type: 'array',
+      type: "array",
       items,
-    }
+    };
   } else if (model) {
-    prop = items
+    prop = items;
   } else {
-    prop = { type: 'null', default: null }
+    prop = { type: "null", default: null };
   }
   return applyDecorators(
-    ApiExtraModels(...(model && !modelIsBaseType ? [ResultData, model] : [ResultData])),
+    ApiExtraModels(
+      ...(model && !modelIsBaseType ? [ResultData, model] : [ResultData])
+    ),
     ApiOkResponse({
       schema: {
         allOf: [
@@ -56,6 +62,6 @@ export const ApiResult = <TModel extends Type<any>>(model?: TModel, isArray?: bo
           },
         ],
       },
-    }),
-  )
-}
+    })
+  );
+};
