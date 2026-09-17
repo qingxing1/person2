@@ -256,8 +256,9 @@ export class BlogService {
     fs.writeFileSync(filePath, fileData);
 
     // 返回访问URL
-    const domain =
-      this.config.get<string>("app.file.domain") || "http://localhost:6999";
+    // domain 为空时返回相对路径（如 /static/blog/cover/xxx.jpg），
+    // 由前端同源访问或 nginx 转发，避免把开发环境地址写死进数据库
+    const domain = this.config.get<string>("app.file.domain") || "";
     const serveRoot =
       this.config.get<string>("app.file.serveRoot") || "/static";
 

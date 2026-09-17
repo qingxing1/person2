@@ -73,6 +73,11 @@ export default defineConfig((env: ConfigEnv) => {
                 target: 'http://localhost:6999',
                 ws: true,
                 changeOrigin: true
+              },
+              // 后端上传的图片（数据库中返回相对路径 /static/...），开发时代理到后端
+              '/static': {
+                target: 'http://localhost:6999',
+                changeOrigin: true
               }
             }
           }
