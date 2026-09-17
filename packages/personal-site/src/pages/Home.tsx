@@ -88,7 +88,7 @@ function Home() {
       console.error('访问统计记录失败:', err);
     });
   }, []);
-
+  
   useEffect(() => {
     if (personInfo) {
       setUsername(personInfo.nickname || "技术开发者");
@@ -421,35 +421,35 @@ function Home() {
           {/* 社交媒体链接 */}
           <div className="flex items-center gap-4 pt-4">
             <a
-              href="https://github.com/Coninute?tab=repositories"
+              href="https://github.com/qingxing1/person2"
               target="_blank"
               rel="noopener noreferrer"
               className="text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             >
               <i className="fa-brands fa-github text-xl"></i>
             </a>
-            <a
+            {/* <a
               href="https://gitee.com/qiaoyuning"
               target="_blank"
               rel="noopener noreferrer"
               className="text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             >
               <i className="fa-brands fa-git text-xl"></i>
-            </a>
+            </a> */}
             <a
-              href="https://blog.csdn.net/duduanwang?spm=1000.2115.3001.5343"
+              href="https://blog.csdn.net/m0_72682057?type=blog"
               target="_blank"
               rel="noopener noreferrer"
               className="text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             >
               <i className="fa-brands fa-zhihu text-xl"></i>
             </a>
-            <a
+            {/* <a
               href="mailto:qiao252423@163.com"
               className="text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             >
               <i className="fa-solid fa-envelope text-xl"></i>
-            </a>
+            </a> */}
           </div>
         </div>
 
