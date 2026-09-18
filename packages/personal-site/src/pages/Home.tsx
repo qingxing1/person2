@@ -53,7 +53,7 @@ function Home() {
     }
   };
   // 用户名
-  const [username, setUsername] = useState("技术开发者");
+  const [username, setUsername] = useState("技术开发者cao");
   // 首页展示列表（来自后端）
   const [latestBlogPosts, setLatestBlogPosts] = useState<any[]>([]);
   const [featuredAlgorithms, setFeaturedAlgorithms] = useState<any[]>([]);
@@ -91,7 +91,7 @@ function Home() {
   
   useEffect(() => {
     if (personInfo) {
-      setUsername(personInfo.nickname || "技术开发者");
+      setUsername(personInfo.nickname || "技术开发者cao");
       // 解析后端 skills 字符串为展示用数组
       if (personInfo.skills && Array.isArray(personInfo.skills)) {
         const parsed = personInfo.skills
