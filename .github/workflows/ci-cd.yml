@@ -114,10 +114,10 @@ jobs:
             cd ${{ vars.DEPLOY_DIR }}
 
             # 本地构建镜像 (docker-compose.yml 中 image 默认标签为 person/*:latest, 无需仓库)
-            docker compose build backend blog-frontend
+            docker compose build backend blog-frontend admin-frontend
 
             # 滚动更新应用服务 (mysql/redis 不受影响)
-            docker compose up -d --no-deps backend blog-frontend
+            docker compose up -d --no-deps backend blog-frontend admin-frontend
 
             # 清理悬空镜像 (构建产生的 <none> 中间层)
             docker image prune -f
