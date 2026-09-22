@@ -45,13 +45,13 @@ export const asyncRoutes: RouteRecordRaw[] = [
     path: '/boke',
     component: shallowRef(Layout),
     redirect: '/boke/info',
-    meta: { title: '博客', icon: 'permission' },
+    meta: { title: '笔记', icon: 'permission' },
     children: [
       {
         path: '/boke/info',
         name: 'boke_info',
         component: () => import('@/views/boke/index.vue'),
-        meta: { title: '博客列表', icon: 'boke' }
+        meta: { title: '笔记列表', icon: 'boke' }
       },{
         path: '/boke/tag',
         name: 'boke_manage',
@@ -165,8 +165,8 @@ export const asyncRoutes: RouteRecordRaw[] = [
     path: '/front',
     name: 'front',
     beforeEnter() {
-      // 跳转到外部地址
-      window.location.href = 'http://qiao252423.top'
+      // 跳转到外部地址: 个人网站主站
+      window.location.href = 'https://www.zecyj.club'
     },
     component: () => import('@/views/front/index.vue'), // 需要提供一个组件，但实际不会被渲染
     meta: { title: '前端展示', icon: 'front' }

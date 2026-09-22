@@ -7,7 +7,7 @@ import { useEffect } from 'react';
  */
 export function usePageTitle(title: string, includeSiteName: boolean = true) {
   useEffect(() => {
-    const siteName = '个人技术博客';
+    const siteName = '个人技术笔记';
     document.title = includeSiteName
       ? `${title} - ${siteName}`
       : title;
