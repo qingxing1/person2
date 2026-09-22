@@ -58,6 +58,14 @@ services:
       - app-network
     volumes:
       - upload-data:/app/uploads
+    healthcheck:
+      # node:18-alpine 自带 busybox wget
+      test: [ "CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:6999/api/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      # NestJS 启动 + TypeORM 连接较慢, 留出宽限期
+      start_period: 30s
 
   # 管理后台 (Nginx) —— 不再对外发布端口, 由 gateway 内网转发
   admin-frontend:
@@ -68,9 +76,17 @@ services:
     container_name: nest-admin-frontend
     restart: unless-stopped
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - app-network
+    healthcheck:
+      # nginx:alpine 自带 busybox wget; 命中静态首页即代表 Nginx worker 已就绪
+      test: [ "CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/" ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
 
   # 个人网站 (Nginx) —— 不再对外发布端口, 由 gateway 内网转发
   blog-frontend:
@@ -81,9 +97,16 @@ services:
     container_name: kouzi-blog-frontend
     restart: unless-stopped
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - app-network
+    healthcheck:
+      test: [ "CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/" ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
 
   # 统一入口网关 —— 全系统唯一暴露 80/443 的服务
   # TLS 终止 + 按域名分发到 admin-frontend / blog-frontend
@@ -98,11 +121,23 @@ services:
       - ./nginx/gateway.conf:/etc/nginx/conf.d/default.conf:ro
       # 证书由 scripts/init-ssl.sh 签发到宿主机, 只读挂载
       - ./nginx/certs:/etc/nginx/certs:ro
+    # 等待前端容器真正 healthy (Nginx worker 就绪) 后再启动 gateway,
+    # 避免 gateway 先于上游起来, 启动瞬间代理解析失败/502
     depends_on:
-      - admin-frontend
-      - blog-frontend
+      admin-frontend:
+        condition: service_healthy
+      blog-frontend:
+        condition: service_healthy
     networks:
       - app-network
+    healthcheck:
+      # gateway.conf 的 default_server 里有 /healthz 返回 200,
+      # 不能用 / (301 会被 wget 跟随到 HTTPS, 误判失败)
+      test: [ "CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/healthz" ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 5s
 
 volumes:
   mysql-data: 

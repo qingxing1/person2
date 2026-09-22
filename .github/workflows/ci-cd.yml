@@ -135,11 +135,40 @@ jobs:
             # 所以这里显式校验并热重载。nginx -t 不通过就保持旧配置继续服务,
             # 避免一次写错 conf 导致全站 502。
             if [ -n "$GATEWAY_SVC" ]; then
+              # 先等 gateway 容器进入 running 再 exec。
+              # 容器刚 recreate 或上游尚未就绪时可能处于 Restarting,
+              # 此时 exec 会直接报错把整个部署打挂。
+              gateway_ok=0
+              for i in $(seq 1 12); do
+                status=$(docker inspect -f '{{.State.Status}}' nest-admin-gateway 2>/dev/null || echo "missing")
+                if [ "$status" = "running" ]; then
+                  gateway_ok=1
+                  break
+                fi
+                echo "等待 gateway 容器进入 running (当前: $status, $i/12)"
+                sleep 5
+              done
+
+              if [ "$gateway_ok" != "1" ]; then
+                echo "错误: gateway 容器 60 秒内未进入 running 状态"
+                docker compose logs --tail=50 gateway
+                exit 1
+              fi
+
               if docker compose exec -T gateway nginx -t; then
                 docker compose exec -T gateway nginx -s reload
                 echo "网关配置已重载"
               else
                 echo "错误: gateway.conf 校验未通过, 保持旧配置运行"
+                exit 1
+              fi
+
+              # reload 后确认 Nginx 仍能正常响应 (配置载入了新进程)
+              if curl -fsS http://localhost/healthz > /dev/null 2>&1; then
+                echo "网关 HTTP 健康检查通过"
+              else
+                echo "错误: 网关 reload 后 /healthz 无响应"
+                docker compose logs --tail=30 gateway
                 exit 1
               fi
             fi
