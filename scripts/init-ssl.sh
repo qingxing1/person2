@@ -86,7 +86,6 @@ docker compose up -d gateway
 然后在服务器本地执行验证 (回环访问避免受 DNS 缓存影响):
 curl -fsS --resolve ztcyj.club:443:127.0.0.1 https://ztcyj.club -o /dev/null -w '%{http_code}\n'
 curl -fsS --resolve admin.ztcyj.club:443:127.0.0.1 https://admin.ztcyj.club -o /dev/null -w '%{http_code}\n'
-curl -fsS --resolve www.ztcyj.club:443:127.0.0.1 https://www.ztcyj.club -o /dev/null -w '%{http_code} -> %{redirect_url}\n' || true
 
 从外网检查证书链:
 https://ssllabs.com

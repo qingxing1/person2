@@ -73,22 +73,37 @@ jobs:
     name: Rsync & Deploy on Server
     runs-on: ubuntu-latest
     needs: ci
+
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+
     environment: production
+
     steps:
+      # ==========================================================
+      # 1. 检出代码
+      # ==========================================================
       - name: 检出代码
         uses: actions/checkout@v4
 
+      # ==========================================================
+      # 2. 配置 SSH
+      # ==========================================================
       - name: 配置 SSH 密钥
         run: |
           mkdir -p ~/.ssh
+
           echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -p ${{ secrets.SERVER_PORT || 22 }} -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
+          ssh-keyscan \
+            -p ${{ secrets.SERVER_PORT || 22 }} \
+            -H ${{ secrets.SERVER_HOST }} \
+            >> ~/.ssh/known_hosts
+
+      # ==========================================================
+      # 3. 同步代码
+      # ==========================================================
       - name: rsync 同步代码到服务器
-        # --delete 保持服务器目录与仓库一致; --exclude 的文件不受影响
-        # .env / 证书 / upload 等服务器本地文件被排除, 不会被覆盖或删除
         run: |
           rsync -avz --delete \
             -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.SERVER_PORT || 22 }}" \
@@ -102,114 +117,324 @@ jobs:
             --exclude 'nginx/certs/*' \
             --exclude 'upload' \
             --exclude 'uploads' \
-            ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ vars.DEPLOY_DIR }}/
+            ./ \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ vars.DEPLOY_DIR }}/
 
-      - name: SSH 在服务器上构建并滚动更新
+      # ==========================================================
+      # 4. 服务器部署
+      # ==========================================================
+      - name: SSH 在服务器上构建并部署
         uses: appleboy/ssh-action@v1.2.0
+
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT || 22 }}
+
           script: |
             set -e
+
             cd ${{ vars.DEPLOY_DIR }}
 
-            # 本地构建镜像 (docker-compose.yml 中 image 默认标签为 person/*:latest, 无需仓库)
-            docker compose build backend blog-frontend admin-frontend
+            echo "========================================"
+            echo "开始部署"
+            echo "========================================"
 
-            # 网关的 Nginx 在证书缺失时会直接启动失败。先判断证书是否就绪,
-            # 未就绪就跳过 gateway, 避免首次上线把整条流水线卡死。
-            GATEWAY_SVC=""
-            if [ -f nginx/certs/fullchain.pem ]; then
-              GATEWAY_SVC="gateway"
-            else
-              echo "提示: nginx/certs/fullchain.pem 不存在, 本次跳过 gateway"
-              echo "      在服务器执行 scripts/init-ssl.sh 签发证书后重新部署即可启用 HTTPS"
-            fi
+            # ====================================================
+            # ① 检查 Gateway 配置文件
+            # ====================================================
 
-            # 滚动更新应用服务 (mysql/redis 不受影响)
-            docker compose up -d --no-deps backend blog-frontend admin-frontend $GATEWAY_SVC
+            echo ""
+            echo ">>> 检查 nginx/gateway.conf"
 
-            # 网关的 conf / 证书是宿主机挂载进去的, 文件变了容器不会重建,
-            # 所以这里显式校验并热重载。nginx -t 不通过就保持旧配置继续服务,
-            # 避免一次写错 conf 导致全站 502。
-            if [ -n "$GATEWAY_SVC" ]; then
-              # 先等 gateway 容器进入 running 再 exec。
-              # 容器刚 recreate 或上游尚未就绪时可能处于 Restarting,
-              # 此时 exec 会直接报错把整个部署打挂。
-              gateway_ok=0
-              for i in $(seq 1 12); do
-                status=$(docker inspect -f '{{.State.Status}}' nest-admin-gateway 2>/dev/null || echo "missing")
-                if [ "$status" = "running" ]; then
-                  gateway_ok=1
-                  break
-                fi
-                echo "等待 gateway 容器进入 running (当前: $status, $i/12)"
-                sleep 5
-              done
-
-              if [ "$gateway_ok" != "1" ]; then
-                echo "错误: gateway 容器 60 秒内未进入 running 状态"
-                docker compose logs --tail=50 gateway
-                exit 1
-              fi
-
-              if docker compose exec -T gateway nginx -t; then
-                docker compose exec -T gateway nginx -s reload
-                echo "网关配置已重载"
-              else
-                echo "错误: gateway.conf 校验未通过, 保持旧配置运行"
-                exit 1
-              fi
-
-              # reload 后确认 Nginx 仍能正常响应 (配置载入了新进程)
-              if curl -fsS http://localhost/healthz > /dev/null 2>&1; then
-                echo "网关 HTTP 健康检查通过"
-              else
-                echo "错误: 网关 reload 后 /healthz 无响应"
-                docker compose logs --tail=30 gateway
-                exit 1
-              fi
-            fi
-
-            # 清理悬空镜像 (构建产生的 <none> 中间层)
-            docker image prune -f
-
-            # 健康检查: 等待后端就绪 (最多 60 秒)
-            backend_ok=0
-            for i in $(seq 1 12); do
-              if curl -fsS http://localhost:${BACKEND_PORT:-6999}/api/health > /dev/null 2>&1; then
-                echo "后端服务健康检查通过"
-                backend_ok=1
-                break
-              fi
-              echo "等待后端启动... ($i/12)"
-              sleep 5
-            done
-
-            if [ "$backend_ok" != "1" ]; then
-              echo "警告: 健康检查未通过, 请人工确认服务状态"
-              docker compose logs --tail=50 backend
+            if [ ! -f nginx/gateway.conf ]; then
+              echo "错误: nginx/gateway.conf 不存在"
               exit 1
             fi
 
-            # HTTPS 冒烟检查 —— 网关未启用或证书异常时只告警, 不阻塞部署
-            if [ -n "$GATEWAY_SVC" ]; then
-              if curl -fsS --resolve www.ztcyj.club:443:127.0.0.1 \
-                   https://www.ztcyj.club/api/health > /dev/null 2>&1; then
-                echo "HTTPS 网关检查通过 (www.ztcyj.club)"
-              else
-                echo "警告: HTTPS 检查失败, 请检查 gateway 容器与证书链"
-                docker compose logs --tail=30 gateway
-              fi
+            echo "当前 server_name:"
+            grep -n "server_name" nginx/gateway.conf || true
+
+            # 如果已经决定完全取消 www，这里可以直接阻止旧配置部署
+            if grep -q "www\.ztcyj\.club" nginx/gateway.conf; then
+              echo "错误: gateway.conf 仍然包含 www.ztcyj.club"
+              echo "请修改 nginx/gateway.conf 后重新提交"
+              exit 1
             fi
 
+            echo "Gateway 配置文件检查通过"
+
+            # ====================================================
+            # ② 构建应用镜像
+            # ====================================================
+
+            echo ""
+            echo ">>> 构建应用镜像"
+
+            docker compose build \
+              backend \
+              blog-frontend \
+              admin-frontend
+
+            # ====================================================
+            # ③ 更新应用服务
+            # ====================================================
+
+            echo ""
+            echo ">>> 更新 backend / frontend"
+
+            docker compose up -d --no-deps \
+              backend \
+              blog-frontend \
+              admin-frontend
+
+            # ====================================================
+            # ④ 等待前端服务 healthy
+            # ====================================================
+
+            echo ""
+            echo ">>> 等待前端服务 healthy"
+
+            for i in $(seq 1 12); do
+
+              admin_status=$(docker inspect \
+                -f '{{.State.Health.Status}}' \
+                nest-admin-frontend \
+                2>/dev/null || echo "missing")
+
+              blog_status=$(docker inspect \
+                -f '{{.State.Health.Status}}' \
+                kouzi-blog-frontend \
+                2>/dev/null || echo "missing")
+
+              echo "admin: $admin_status"
+              echo "blog : $blog_status"
+              echo "进度: $i/12"
+
+              if [ "$admin_status" = "healthy" ] && \
+                 [ "$blog_status" = "healthy" ]; then
+                break
+              fi
+
+              sleep 5
+
+            done
+
+            # ====================================================
+            # ⑤ Gateway
+            # ====================================================
+
+            echo ""
+            echo ">>> 更新 Gateway"
+
+            # 注意：
+            # gateway.conf 是 volume 挂载的，不需要 build gateway
+            docker compose up -d gateway
+
+            # ====================================================
+            # ⑥ 等待 Gateway running
+            # ====================================================
+
+            gateway_ok=0
+
+            for i in $(seq 1 12); do
+
+              status=$(docker inspect \
+                -f '{{.State.Status}}' \
+                nest-admin-gateway \
+                2>/dev/null || echo "missing")
+
+              echo "Gateway 状态: $status ($i/12)"
+
+              if [ "$status" = "running" ]; then
+                gateway_ok=1
+                break
+              fi
+
+              sleep 5
+
+            done
+
+            if [ "$gateway_ok" != "1" ]; then
+
+              echo "错误: Gateway 60 秒内没有进入 running"
+
+              docker compose logs --tail=50 gateway
+
+              exit 1
+
+            fi
+
+            # ====================================================
+            # ⑦ Nginx 配置检查
+            # ====================================================
+
+            echo ""
+            echo ">>> nginx -t"
+
+            docker compose exec -T gateway nginx -t
+
+            # ====================================================
+            # ⑧ 查看 Gateway 实际加载的配置
+            # ====================================================
+
+            echo ""
+            echo ">>> Gateway 实际 server_name"
+
+            docker compose exec -T gateway nginx -T 2>&1 \
+              | grep -E "server_name|ztcyj\.club"
+
+            # 确认旧 www 配置没有进入 Nginx
+            if docker compose exec -T gateway nginx -T 2>&1 \
+              | grep -q "www\.ztcyj\.club"; then
+
+              echo "错误: Gateway 仍然加载了 www.ztcyj.club"
+
+              exit 1
+
+            fi
+
+            # ====================================================
+            # ⑨ Reload Nginx
+            # ====================================================
+
+            echo ""
+            echo ">>> Reload Nginx"
+
+            docker compose exec -T gateway nginx -s reload
+
+            echo "Nginx 配置 reload 成功"
+
+            # ====================================================
+            # ⑩ Gateway HTTP 健康检查
+            # ====================================================
+
+            echo ""
+            echo ">>> Gateway HTTP 健康检查"
+
+            if curl -fsS \
+              http://localhost/healthz \
+              > /dev/null 2>&1; then
+
+              echo "Gateway HTTP 健康检查通过"
+
+            else
+
+              echo "错误: Gateway /healthz 无响应"
+
+              docker compose logs --tail=30 gateway
+
+              exit 1
+
+            fi
+
+            # ====================================================
+            # ⑪ 后端健康检查
+            # ====================================================
+
+            echo ""
+            echo ">>> Backend 健康检查"
+
+            backend_ok=0
+
+            for i in $(seq 1 12); do
+
+              if curl -fsS \
+                http://localhost:${BACKEND_PORT:-6999}/api/health \
+                > /dev/null 2>&1; then
+
+                echo "Backend 健康检查通过"
+
+                backend_ok=1
+
+                break
+
+              fi
+
+              echo "等待 Backend 启动... ($i/12)"
+
+              sleep 5
+
+            done
+
+            if [ "$backend_ok" != "1" ]; then
+
+              echo "错误: Backend 健康检查失败"
+
+              docker compose logs --tail=50 backend
+
+              exit 1
+
+            fi
+
+            # ====================================================
+            # ⑫ HTTPS 主站测试
+            # ====================================================
+
+            echo ""
+            echo ">>> HTTPS 主站测试"
+
+            if curl -fsS \
+              --resolve ztcyj.club:443:127.0.0.1 \
+              https://ztcyj.club/api/health \
+              > /dev/null 2>&1; then
+
+              echo "HTTPS 主站检查通过: ztcyj.club"
+
+            else
+
+              echo "警告: ztcyj.club HTTPS 检查失败"
+
+              docker compose logs --tail=30 gateway
+
+            fi
+            # ====================================================
+            # ⑬ HTTPS 管理后台测试
+            # ====================================================
+
+            echo ""
+            echo ">>> HTTPS 管理后台测试"
+
+            if curl -fsS \
+              --resolve admin.ztcyj.club:443:127.0.0.1 \
+              https://admin.ztcyj.club/ \
+              > /dev/null 2>&1; then
+
+              echo "HTTPS 管理后台检查通过: admin.ztcyj.club"
+
+            else
+
+              echo "警告: admin.ztcyj.club HTTPS 检查失败"
+
+            fi
+
+            # ====================================================
+            # ⑭ 清理悬空镜像
+            # ====================================================
+            echo ""
+            echo ">>> 清理悬空镜像"
+            docker image prune -f
+            # ====================================================
+            # ⑮ 最终状态
+            # ====================================================
+
+            echo ""
+            echo "========================================"
+            echo "部署完成"
+            echo "========================================"
+
+            docker compose ps
+
+      # ==========================================================
+      # 5. 部署结果通知
+      # ==========================================================
       - name: 部署结果通知
         if: always()
         run: |
           if [ "${{ job.status }}" == "success" ]; then
-            echo "部署成功: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            echo "部署成功:"
+            echo "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           else
-            echo "部署失败, 请检查工作流日志"
+            echo "部署失败，请检查 GitHub Actions 日志"
           fi
