@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DOMAIN="zecyj.club"
+DOMAIN="ztcyj.club"
 GATEWAY_CONTAINER="nest-admin-gateway"
 
 # 脚本所在目录的上一级即仓库根目录
@@ -84,8 +84,8 @@ cd $REPO_ROOT
 docker compose up -d gateway
 
 然后在服务器本地执行验证 (回环访问避免受 DNS 缓存影响):
-curl -fsS --resolve www.zecyj.club:443:127.0.0.1 https://zecyj.club
-curl -fsS --resolve admin.zecyj.club:443:127.0.0.1 https://zecyj.club -o /dev/null -w '%{http_code}\n'
+curl -fsS --resolve www.ztcyj.club:443:127.0.0.1 https://ztcyj.club
+curl -fsS --resolve admin.ztcyj.club:443:127.0.0.1 https://ztcyj.club -o /dev/null -w '%{http_code}\n'
 
 从外网检查证书链:
 https://ssllabs.com
