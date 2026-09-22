@@ -167,9 +167,9 @@ jobs:
 
             # HTTPS 冒烟检查 —— 网关未启用或证书异常时只告警, 不阻塞部署
             if [ -n "$GATEWAY_SVC" ]; then
-              if curl -fsS --resolve www.zecyj.club:443:127.0.0.1 \
-                   https://www.zecyj.club/api/health > /dev/null 2>&1; then
-                echo "HTTPS 网关检查通过 (www.zecyj.club)"
+              if curl -fsS --resolve www.ztcyj.club:443:127.0.0.1 \
+                   https://www.ztcyj.club/api/health > /dev/null 2>&1; then
+                echo "HTTPS 网关检查通过 (www.ztcyj.club)"
               else
                 echo "警告: HTTPS 检查失败, 请检查 gateway 容器与证书链"
                 docker compose logs --tail=30 gateway
