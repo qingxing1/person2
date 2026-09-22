@@ -13,7 +13,6 @@ import { AppHttpCode } from "../../common/enums/code.enum";
 
 import { OssEntity } from "./oss.entity";
 import { FindOssDto } from "./dto/find-oss.dto";
-import { UpdateOssDto } from "./dto/update-oss.dto";
 
 @Injectable()
 export class OssService {
@@ -113,31 +112,31 @@ export class OssService {
     return ResultData.ok({ list: instanceToPlain(res[0]), total: res[1] });
   }
 
-  async update(dto: UpdateOssDto): Promise<ResultData> {
-    const exist = await this.ossRepo.findOne({ where: { id: dto.id } });
-    if (!exist) {
-      return ResultData.fail(AppHttpCode.DATA_IS_EMPTY, "文件记录不存在");
-    }
-    exist.business = dto.business;
-    const res = await this.ossRepo.save(exist);
-    if (!res) {
-      return ResultData.fail(AppHttpCode.SERVICE_ERROR, "更新失败，请稍后重试");
-    }
-    return ResultData.ok();
-  }
+  // async update(dto: UpdateOssDto): Promise<ResultData> {
+  //   const exist = await this.ossRepo.findOne({ where: { id: dto.id } });
+  //   if (!exist) {
+  //     return ResultData.fail(AppHttpCode.DATA_IS_EMPTY, "文件记录不存在");
+  //   }
+  //   exist.business = dto.business;
+  //   const res = await this.ossRepo.save(exist);
+  //   if (!res) {
+  //     return ResultData.fail(AppHttpCode.SERVICE_ERROR, "更新失败，请稍后重试");
+  //   }
+  //   return ResultData.ok();
+  // }
 
-  async delete(id: string): Promise<ResultData> {
-    const exist = await this.ossRepo.findOne({ where: { id } });
-    if (!exist) {
-      return ResultData.fail(AppHttpCode.DATA_IS_EMPTY, "文件记录不存在");
-    }
-    try {
-      // 磁盘文件可能已被手动删除，删除失败不阻断记录删除
-      fs.unlinkSync(exist.location);
-    } catch (error) {
-      console.warn(`删除磁盘文件失败: ${exist.location}`, error.message);
-    }
-    await this.ossRepo.delete(id);
-    return ResultData.ok();
-  }
+  // async delete(id: string): Promise<ResultData> {
+  //   const exist = await this.ossRepo.findOne({ where: { id } });
+  //   if (!exist) {
+  //     return ResultData.fail(AppHttpCode.DATA_IS_EMPTY, "文件记录不存在");
+  //   }
+  //   try {
+  //     // 磁盘文件可能已被手动删除，删除失败不阻断记录删除
+  //     fs.unlinkSync(exist.location);
+  //   } catch (error) {
+  //     console.warn(`删除磁盘文件失败: ${exist.location}`, error.message);
+  //   }
+  //   await this.ossRepo.delete(id);
+  //   return ResultData.ok();
+  // }
 }

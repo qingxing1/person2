@@ -2,9 +2,6 @@ import {
   Controller,
   Get,
   Post,
-  Put,
-  Delete,
-  Param,
   UploadedFile,
   UseInterceptors,
   Query,
@@ -25,7 +22,6 @@ import { ResultData } from "../../common/utils/result";
 
 import { OssService } from "./oss.service";
 import { FindOssDto } from "./dto/find-oss.dto";
-import { UpdateOssDto } from "./dto/update-oss.dto";
 import { ApiResult } from "../../common/decorators/api-result.decorator";
 import { OssEntity } from "./oss.entity";
 
@@ -77,17 +73,17 @@ export class OssController {
     return await this.ossService.findList(search);
   }
 
-  @Put()
-  @ApiOperation({ summary: "更新文件备注" })
-  @ApiResult()
-  async update(@Body() dto: UpdateOssDto): Promise<ResultData> {
-    return await this.ossService.update(dto);
-  }
+  // @Put()
+  // @ApiOperation({ summary: "更新文件备注" })
+  // @ApiResult()
+  // async update(@Body() dto: UpdateOssDto): Promise<ResultData> {
+  //   return await this.ossService.update(dto);
+  // }
 
-  @Delete(":id")
-  @ApiOperation({ summary: "删除文件（同时删除磁盘文件）" })
-  @ApiResult()
-  async delete(@Param("id") id: string): Promise<ResultData> {
-    return await this.ossService.delete(id);
-  }
+  // @Delete(":id")
+  // @ApiOperation({ summary: "删除文件（同时删除磁盘文件）" })
+  // @ApiResult()
+  // async delete(@Param("id") id: string): Promise<ResultData> {
+  //   return await this.ossService.delete(id);
+  // }
 }
