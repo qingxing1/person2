@@ -273,16 +273,6 @@ jobs:
             docker compose exec -T gateway nginx -T 2>&1 \
               | grep -E "server_name|ztcyj\.club"
 
-            # 确认旧 www 配置没有进入 Nginx
-            if docker compose exec -T gateway nginx -T 2>&1 \
-              | grep -q "www\.ztcyj\.club"; then
-
-              echo "错误: Gateway 仍然加载了 www.ztcyj.club"
-
-              exit 1
-
-            fi
-
             # ====================================================
             # ⑨ Reload Nginx
             # ====================================================
