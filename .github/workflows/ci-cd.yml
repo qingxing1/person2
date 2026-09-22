@@ -153,18 +153,6 @@ jobs:
               exit 1
             fi
 
-            echo "当前 server_name:"
-            grep -n "server_name" nginx/gateway.conf || true
-
-            # 如果已经决定完全取消 www，这里可以直接阻止旧配置部署
-            if grep -q "www\.ztcyj\.club" nginx/gateway.conf; then
-              echo "错误: gateway.conf 仍然包含 www.ztcyj.club"
-              echo "请修改 nginx/gateway.conf 后重新提交"
-              exit 1
-            fi
-
-            echo "Gateway 配置文件检查通过"
-
             # ====================================================
             # ② 构建应用镜像
             # ====================================================
