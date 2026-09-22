@@ -3,7 +3,7 @@
     <div class="editor-content">
       <el-form ref="formRef" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="标题" prop="title">
-          <el-input v-model="form.title" placeholder="请输入博客标题" />
+          <el-input v-model="form.title" placeholder="请输入笔记标题" />
         </el-form-item>
         <div class="flex justify-between w-full">
           <el-form-item label="分类" prop="category">

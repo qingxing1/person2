@@ -88,7 +88,7 @@ jobs:
 
       - name: rsync 同步代码到服务器
         # --delete 保持服务器目录与仓库一致; --exclude 的文件不受影响
-        # .env / upload 等服务器本地文件被排除, 不会被覆盖或删除
+        # .env / 证书 / upload 等服务器本地文件被排除, 不会被覆盖或删除
         run: |
           rsync -avz --delete \
             -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.SERVER_PORT || 22 }}" \
@@ -98,6 +98,8 @@ jobs:
             --exclude '**/node_modules' \
             --exclude '**/dist' \
             --exclude '.env' \
+            --include 'nginx/certs/.gitkeep' \
+            --exclude 'nginx/certs/*' \
             --exclude 'upload' \
             --exclude 'uploads' \
             ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ vars.DEPLOY_DIR }}/
@@ -116,24 +118,63 @@ jobs:
             # 本地构建镜像 (docker-compose.yml 中 image 默认标签为 person/*:latest, 无需仓库)
             docker compose build backend blog-frontend admin-frontend
 
+            # 网关的 Nginx 在证书缺失时会直接启动失败。先判断证书是否就绪,
+            # 未就绪就跳过 gateway, 避免首次上线把整条流水线卡死。
+            GATEWAY_SVC=""
+            if [ -f nginx/certs/fullchain.pem ]; then
+              GATEWAY_SVC="gateway"
+            else
+              echo "提示: nginx/certs/fullchain.pem 不存在, 本次跳过 gateway"
+              echo "      在服务器执行 scripts/init-ssl.sh 签发证书后重新部署即可启用 HTTPS"
+            fi
+
             # 滚动更新应用服务 (mysql/redis 不受影响)
-            docker compose up -d --no-deps backend blog-frontend admin-frontend
+            docker compose up -d --no-deps backend blog-frontend admin-frontend $GATEWAY_SVC
+
+            # 网关的 conf / 证书是宿主机挂载进去的, 文件变了容器不会重建,
+            # 所以这里显式校验并热重载。nginx -t 不通过就保持旧配置继续服务,
+            # 避免一次写错 conf 导致全站 502。
+            if [ -n "$GATEWAY_SVC" ]; then
+              if docker compose exec -T gateway nginx -t; then
+                docker compose exec -T gateway nginx -s reload
+                echo "网关配置已重载"
+              else
+                echo "错误: gateway.conf 校验未通过, 保持旧配置运行"
+                exit 1
+              fi
+            fi
 
             # 清理悬空镜像 (构建产生的 <none> 中间层)
             docker image prune -f
 
             # 健康检查: 等待后端就绪 (最多 60 秒)
+            backend_ok=0
             for i in $(seq 1 12); do
               if curl -fsS http://localhost:${BACKEND_PORT:-6999}/api/health > /dev/null 2>&1; then
                 echo "后端服务健康检查通过"
-                exit 0
+                backend_ok=1
+                break
               fi
               echo "等待后端启动... ($i/12)"
               sleep 5
             done
-            echo "警告: 健康检查未通过, 请人工确认服务状态"
-            docker compose logs --tail=50 backend
-            exit 1
+
+            if [ "$backend_ok" != "1" ]; then
+              echo "警告: 健康检查未通过, 请人工确认服务状态"
+              docker compose logs --tail=50 backend
+              exit 1
+            fi
+
+            # HTTPS 冒烟检查 —— 网关未启用或证书异常时只告警, 不阻塞部署
+            if [ -n "$GATEWAY_SVC" ]; then
+              if curl -fsS --resolve www.zecyj.club:443:127.0.0.1 \
+                   https://www.zecyj.club/api/health > /dev/null 2>&1; then
+                echo "HTTPS 网关检查通过 (www.zecyj.club)"
+              else
+                echo "警告: HTTPS 检查失败, 请检查 gateway 容器与证书链"
+                docker compose logs --tail=30 gateway
+              fi
+            fi
 
       - name: 部署结果通知
         if: always()

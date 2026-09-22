@@ -13,7 +13,7 @@ export function Footer() {
               关于
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-              个人技术博客与算法集，分享前端开发、后端技术和算法知识。
+              个人技术笔记与算法集，分享前端开发、后端技术和算法知识。
             </p>
           </div>
           
@@ -30,7 +30,7 @@ export function Footer() {
               </li>
               <li>
                 <Link to="/blog" className="text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                  博客
+                  笔记
                 </Link>
               </li>
               <li>
@@ -49,7 +49,7 @@ export function Footer() {
           {/* 博客分类 */}
           <div>
             <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">
-              博客分类
+              笔记分类
             </h3>
             <ul className="space-y-2">
               <li>
@@ -122,7 +122,7 @@ export function Footer() {
               rel="noopener noreferrer"
               className="text-sm text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             >
-              湘ICP备2026042414号-1
+              湘ICP备2026042414号
             </a>
           </div>
           <div className="flex space-x-6 mt-4 md:mt-0">

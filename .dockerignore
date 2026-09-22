@@ -8,5 +8,7 @@ coverage
 **/coverage
 .env
 .env.*
+# 证书私钥不下发到构建上下文
+nginx/certs
 *.log
 .DS_Store

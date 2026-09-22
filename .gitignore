@@ -27,3 +27,7 @@ packages/*/*.d.ts
 # Upload directory
 upload/
 packages/upload/
+
+# TLS 证书 (服务器本地由 acme.sh 签发, 私钥严禁入库)
+nginx/certs/*
+!nginx/certs/.gitkeep

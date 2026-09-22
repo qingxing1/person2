@@ -4,12 +4,12 @@
             <!-- 工具栏 -->
             <div class="toolbar">
                 <div class="toolbar-title">
-                    博客管理
+                    笔记管理
                 </div>
                 <div class="flex justify-between w-3/7">
 
                     <div class="toolbar-left">
-                        <el-input v-model="searchKeyword" placeholder="搜索博客标题" style="width: 300px" clearable
+                        <el-input v-model="searchKeyword" placeholder="搜笔记标题" style="width: 300px" clearable
                             @clear="handleSearch" @input="handleSearch">
                             <template #prefix>
                                 <el-icon>
