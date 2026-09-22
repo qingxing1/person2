@@ -122,7 +122,7 @@ export function Footer() {
               rel="noopener noreferrer"
               className="text-sm text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             >
-              冀 ICP 备 2025126403 号
+              湘ICP备2026042414号-1
             </a>
           </div>
           <div className="flex space-x-6 mt-4 md:mt-0">
